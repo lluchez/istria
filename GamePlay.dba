@@ -1,0 +1,3080 @@
+`              ###################################
+`              ##    File created by b!g b@$s   ##
+`              ##         Project R P G         ##
+`              ##             ISTRIA            ##
+`              ###################################
+
+`` copie de la police de texte 'Palatino Linotype'
+if file exist(windir$()+"\fonts\pala.ttf")=0
+   copy file "Data\pala.ttf", windir$()+ "\fonts\pala.ttf"
+   print "Pour pouvoir utiliser la police"
+   print "qui vient d'être copiée,"
+   print "il est préférable de rebooter votre PC."
+   print "": print "Merci de votre compréhension."
+   wait key
+endif
+
+depth=16
+if cl$()="-d16" then depth=16
+if cl$()="-d24" then depth=24
+if cl$()="-d32" then depth=32
+
+
+taux = 20: sync on: sync rate taux: randomize timer()
+set display mode 640, 480, depth
+cls 0 : sync
+hide mouse
+
+DEMO = 0
+rem createlog()
+
+
+im_4_sav = 1512
+
+`########################   TABLEAUX  ################################
+
+dim x(100) : dim y(100): dim evPerso(100)
+dim di(100) : dim im1(100): dim move(100)
+dim nivo(100,100,4): dim event(2000): dim key(6)
+dim decorB(2000): dim decorH(2000): dim hauteur(2000)
+dim NumEne(20): dim FreqEne(20): dim LevEne(20)
+
+dim affi(22,16): ``pr l'affichage (tri)
+
+dim withMe(3): dim nom$(10): dim mstIm(3)
+dim xIm(3): dim yIm(3)
+dim bex(3): dim bey(3) : dim bpx(3) : dim bpy(3)
+
+dim Recup(13): dim Force(13): dim Energ(13): dim EnMax(13)
+dim Rapid(13): dim agili(13): dim Preci(13): dim Level(10)
+dim ExPts(10): dim NextL(10)
+dim Degat(13): dim Poids(13): dim loupe(13)
+dim mort(13):  dim jauge(13): dim kill(3): dim Defen(13)
+dim givPt(3)
+
+dim equip(3,10): dim nomObjet$(60):dim nbrObj(60): dim dispObj(60)
+dim objSta(60): dim obJPoi(60)
+
+dim lettre$(16,5): dim cmd$(100)
+dim msgCombat$(10)
+dim cptr(3)
+dim nbMusType(4): dim dureeMusic(32)
+dim infoMusic(4): dim inThePlayList(32)
+   ``1 = début musique jouée
+   ``2 = num musique jouée
+   ``3 = nbr de musiques dispo pr la map
+   ``4 = Muet ???
+
+
+dim Save$(10,3)
+   ``1 = validité du fichier
+   ``2 = date
+   ``3 = heure
+   ``4, 5, 6 = WithMe()
+
+
+
+`################### MAXIMIZE INIT ###################
+
+dim maximize(5)
+maximize(0)=0: maximize(1)=31: maximize(2)=30: maximize(3)=60000
+maximize(2)=59999: maximize(4)=60001
+create bitmap maximize(1), 320,240
+
+
+
+
+`#########################    VALEURS   ###################################
+
+lang$ = getInfoForLaunching()
+set text font "Palatino Linotype"
+set text size 17
+set text to italic
+argent=21
+
+
+restore statsObj
+   for i = 1 to 56: read objSta(i): read objPoi(i): next i
+
+
+open to read 2, "Maps\size.dat"
+   read byte 2, xBasse
+   read byte 2, yBasse
+   read byte 2, xHaute
+   read byte 2, yHaute
+   read byte 2, p
+   read byte 2, p
+   read byte 2, xAnimH
+   read byte 2, yAnimH
+close file 2
+
+
+`Chargement des valeurs des murs
+restore nivB
+   for i = 0 to (xBasse * yBasse)-1
+      read decorB(i)
+   next i
+
+restore nivH
+   for i = 0 to (xHaute * yHaute)-1
+      read decorH(i)
+   next i
+
+restore haut
+   for i = 0 to (xHaute * yHaute)-1
+      read hauteur(i)
+   next i
+
+restore hautAnime
+   for i = 0 to (xAnimH * yAnimH)-1
+      read hauteur(1512+i)
+   next i
+
+
+
+`############################  INTRO   ##################################
+
+charge_images()
+do_maximize()
+
+if DEMO then goto Beta_test
+
+sync rate 10
+chargementLangue(lang$,0)
+load_img_for_intro()
+play_intro_anim()      :``affichage de l'anim
+
+r = intro_menu(-1)      :``affichage du menu
+do
+   select r
+      case 1
+         unload_img_intro()
+         level = 1: x(0) = 32: y(0) = 16: di(0) = 4: im1(0) = 12
+         goto Start_game
+      endcase
+
+      case 2
+         partie_to_load = ChoiceGameToLoad()
+         if partie_to_load
+            unload_img_intro()
+            FileToExtract = LoadFromSlot(partie_to_load)
+            goto Start_game
+         endif
+      endcase
+
+      case 3: Stop Music 1: end: endcase
+   endselect
+r = intro_menu(5)
+loop
+
+end
+
+
+
+
+
+`` ##############  Données pour les béta test  ##################
+Beta_test:
+chargementLangue(lang$,1)
+
+MUET = 1
+rem infoMusic(4) = MUET
+
+event(100)=2
+
+``level = 1: x(0) = 32: y(0) = 16: di(0) = 4: im1(0) = 12
+level = 5: x(0) = 36: y(0) = 100: di(0) = 2: im1(0) = 12
+level = 10: x(0) = 32: y(0) = 32: di(0) = 4: im1(0) = 12
+level = 14: x(0) = 36: y(0) = 36: di(0) = 2: im1(0) = 12
+``level = 18: x(0) = 12: y(0) = 24: di(0) = 4: im1(0) = 12
+``level = 23: x(0) = 28: y(0) = 28: di(0) = 4: im1(0) = 12
+``level = 37: x(0) = 180: y(0) = 32: di(0) = 4: im1(0) = 12
+``level = 38: x(0) = 24: y(0) = 32: di(0) = 4: im1(0) = 12
+rem level = 41: x(0) = 24: y(0) = 32: di(0) = 4: im1(0) = 12
+
+
+
+`################### Chargement des musiques ####################
+Start_game:
+   load_musiques()
+
+
+
+`##################### Chargement du nivo #####################
+Load_level:
+   sync rate taux
+
+
+`on récupère le numéro de la map
+if FileToExtract then Read Word FileToExtract, level
+
+
+`Chargement du nivo
+decalX=0: decalY = 0: cpt = 0
+for i = 0 to 100 : for j = 0 to 100: for k = 1 to 4: nivo(i,j,k)=0: next k: next j: next i
+if file exist("Maps\" + str3$(level/10) + "\map" + str3$(level) + ".dat")=0
+   cls : print "La map "; level; " n'existe pas"
+   wait key: end
+endif
+open to read 1,"Maps\" + str3$(level/10) + "\map" + str3$(level) + ".dat"
+   read byte 1,tx: read byte 1,ty
+      for i = 0 to tx-1
+         for j = 0 to ty-1
+            read word 1,nivo(i,j,1)
+            read word 1,nivo(i,j,2)
+         next j
+      next i
+
+
+   read byte 1,nD
+     for i = 1 to nD: read byte 1,a: read byte 1,b: read word 1,c: nivo(a,b,4) = c: next i
+
+``creatures ...
+   ex_nbrCrea = nbrCrea
+   read byte 1, nbrCrea
+   read byte 1, FreqCombatMap
+   read byte 1, SafeArea
+      RoundWhereNoBattle = SafeArea + rnd(2)
+   for i = 1 to nbrCrea
+      read byte 1, NumEne(i): read byte 1, FreqEne(i): read byte 1, LevEne(i)
+   next i
+
+
+``chargement des perso
+   read byte 1, nbrPerso
+   for i = 1 to nbrPerso
+      read byte 1, x(i): x(i) = x(i)*4
+      read byte 1, y(i): y(i) = y(i)*4
+      read byte 1, d
+         if d > 0 and d < 16 then di(i) = d
+         if d > 16 then  di(i) = 2^(RND(3))
+      read byte 1, im1(i): im1(i) = im1(i) * 12
+      read word 1, evPerso(i)
+      read byte 1, move(i)
+   next i
+
+``chargement de la playListe
+   read byte 1, infoMusic(3)
+   for i = 1 to 32: inThePlayList(i)=0: next i
+   for i = 1 to infoMusic(3)
+      read byte 1,a
+      inThePlayList(a)=1
+   next i
+
+
+``image de background pour les battles
+   read byte 1, imageBackgrdBattle
+
+close file 1
+
+
+
+`` Si on est en train de charger une partie,
+`` on charge les dernières infos
+if FileToExtract
+   Read Byte FileToExtract, d: DecalX = d*4
+   Read Byte FileToExtract, d: DecalY = d*4
+   Read Word FileToExtract, Argent
+   Close File FileToExtract
+   FileToExtract = 0
+endif
+
+
+
+
+
+
+`Remplissage du tableau d'occupation
+OccupCase(tx,ty,nbrPerso)
+
+
+
+
+
+
+
+`` ##################################################################
+`` ###                                                             ##
+`` ###                     Début du programme                      ##
+`` ###                                                             ##
+`` ##################################################################
+
+boucle:
+   cptr(0)=-1: cpt=0
+   affichage(nbrPerso, decalX, decalY)
+   if vr(ex_nbrCrea) <> vr(nbrCrea) then PlayMusicAdvent()
+
+   if InfoMusic(2)=0 then PlayMusicAdvent()
+
+boucle2:
+repeat: cls: nbrEne = 0
+cptr(0) = mod(cptr(0)+1,4)
+cptr(3)=0
+
+if (x(0)>=0) and (y(0)>=0) and tEvent = 0
+   if ((x(0)/4 = x(0)/4.0) and (y(0)/4 = y(0)/4.0))
+      if nivo(x(0)/4,y(0)/4,4) > 0 and event(nivo(x(0)/4,y(0)/4,4))=0
+         ev = nivo(x(0)/4,y(0)/4,4)
+         positionne_file(ev)
+         read byte 2, tEvent: cpt = 0
+      endif
+   endif
+endif
+
+everyone_static=1
+for i = 0 to nbrPerso
+   if ((x(i)/4 <> x(i)/4.0) or (y(i)/4 <> y(i)/4.0)) then everyone_static=0
+next i
+
+   if everyone_static or tEvent=1
+      if tEvent >0
+         read byte 2,bb1: read byte 2,bb2: read byte 2,bb3: read byte 2,bb4
+            if tEvent = 1
+               if bb2 > 0
+                  i = bb1: keys = bb2
+                     if keys = 4 and fx(nivo(x(i)/4, (y(i)/4)+1, 3) and 4) then nivo(x(i)/4, (y(i)/4)+1, 3) = 15: nivo(x(i)/4, y(i)/4, 3) = (decorB(nivo(x(i)/4, y(i)/4, 1)) | decorH(nivo(x(i)/4, y(i)/4, 2))): y(i) = y(i) +1
+                     if keys = 8 and fx(nivo((x(i)/4)-1, y(i)/4, 3) and 8) then nivo((x(i)/4)-1, y(i)/4, 3) = 15: nivo(x(i)/4, y(i)/4, 3) = (decorB(nivo(x(i)/4, y(i)/4, 1)) | decorH(nivo(x(i)/4, y(i)/4, 2))): x(i) = x(i) -1
+                     if keys = 2 and fx(nivo((x(i)/4)+1, y(i)/4, 3) and 2) then nivo((x(i)/4)+1, y(i)/4, 3) = 15: nivo(x(i)/4, y(i)/4, 3) = (decorB(nivo(x(i)/4, y(i)/4, 1)) | decorH(nivo(x(i)/4, y(i)/4, 2))): x(i) = x(i) +1
+                     if keys = 1 and fx(nivo(x(i)/4, (y(i)/4)-1, 3) and 1) then nivo(x(i)/4, (y(i)/4)-1, 3) = 15: nivo(x(i)/4, y(i)/4, 3) = (decorB(nivo(x(i)/4, y(i)/4, 1)) | decorH(nivo(x(i)/4, y(i)/4, 2))): y(i) = y(i) -1
+                  di(i) = keys
+               else
+                  x(bb1) = bb3: y(bb1) = bb4
+               endif
+            endif
+            if tEvent = 2
+               level = bb1*256+bb2: x(0) = bb3*4: y(0) = bb4*4
+               read byte 2,tEvent
+               if tEvent = 0 then close file 2
+               goto Load_level
+            endif
+
+            `modification de la couche basse
+            if tEvent = 3
+               nivo(bb1,bb2,1) = bb3*256 + bb4
+               OccupCase(tx,ty,nbrPerso)
+            endif
+
+            `modification de la couche haute
+            if tEvent = 4
+               nivo(bb1,bb2,2) = bb3*256 + bb4
+               OccupCase(tx,ty,nbrPerso)
+            endif
+
+            if tEvent = 5
+               if bb1<50
+                  if event(bb2+bb1*256)<>bb3 then for i = 1 to (5*bb4): read byte 2,a: next i
+               else
+                  if bb1 = 50
+                     if repDial <> bb3 then for i = 1 to (5*bb4): read byte 2,a: next i
+                  endif
+                  if bb1 = 51
+                     if x(bb2)<>bb3*4 then for i = 1 to (5*bb4): read byte 2,a: next i
+                  endif
+                  if bb1 = 52
+                     if y(bb2)<>bb3*4 then for i = 1 to (5*bb4): read byte 2,a: next i
+                  endif
+
+                  if bb1 = 53
+                     if argent >= bb2*256+bb3 then for i = 1 to (5*bb4): read byte 2,a: next i
+                  endif
+
+                  ``autres events
+               endif
+            endif
+
+            if tEvent = 7 then decalX = bb1*4: decalY = bb2*4
+
+            if tEvent = 8
+               repDial = dialogue(bb1*256+bb2, bb3, lang$, nbrPerso, decalX, decalY)
+               read byte 2,tEvent
+               if tEvent = 0 then close file 2
+               goto boucle2
+            endif
+
+            if tEvent = 9
+               event(bb1*256+bb2) = bb3
+            endif
+
+            if tEvent = 11
+               close file 2: t = bb1*256 + bb2
+               positionne_file(t)
+            endif
+
+            if tEvent = 12
+               nom$(bb1)=getNom$(nom$(bb1), 1500+bb2, 1, nbrPerso, decalX, decalY)
+            endif
+
+            if tEvent = 14
+               if bb2=0
+               ok = 0: k = 0: cligno=0 : ink rgb(255,255,255),0
+               repeat
+                  init_maximize()
+                  affichage(nbrPerso, decalX, decalY)
+                  paste image 1991,32,192,0
+                  center text 160,207,cmd$(46)+" : "+nomObjet$(bb1)
+                  paste image 5020 + bb1, 50,205,0
+                  if cligno<8 then for i = 0 to 4: box 160-i, 230-i, 160+i, 230-i: next i
+                  if scancode() = 0 then ok=1
+                  if keystate(key(1)) and ok then k = 1
+                  cligno = mod(cligno+1,16)
+                  do_maximize()
+               until k: play sound 3
+               endif
+                  nbrObj(bb1) = nbrObj(bb1)+1
+            endif
+
+            if tEvent = 15 then di(bb1)=bb2: if bb2>8 then di(bb1) = 2^(RND(3))
+
+            if tEvent = 16
+               t = timer()
+               repeat
+                           init_maximize()
+                  if mod(cptr(0),2) then cptr(0) = cptr(0) - 1
+                  cptr(0) = mod(cptr(0)+2,4): affichage(nbrPerso, decalX, decalY)
+                           do_maximize()
+               until timer()-t>=bb1*256+bb2
+            endif
+
+            if tEvent = 22
+               nivo(x(bb1)/2, y(bb1)/2, 3) = (decorB(nivo(x(bb1)/2, y(bb1)/2, 1)) | decorH(nivo(x(bb1)/2, y(bb1)/2, 2)))
+               x(bb1)=-10: y(bb1)=-10
+            endif
+
+           if tEvent = 24
+               if bb1
+                  infoMusic(1) = timer(): if infoMusic(2) then stop music infoMusic(2)
+                  infoMusic(2) = bb1 : play music infoMusic(2)
+               else
+                  PlayMusicAdvent()
+               endif
+           endif
+
+           if tEvent = 27
+               equip(0,bb1-1)=bb2: equip(1,bb1-1)=16+bb3
+               t = bb4 / 32
+               if t then equip(3,bb1-1)=48+t else equip(3,bb1-1)=0
+               if bb4-(t*32) then equip(2,bb1-1)=32 + (bb4-(t*32)) else equip(2,bb1-1)=0
+            endif
+
+
+           if tEvent = 13 then load_for_battle(bb1,bb2,bb3): nbrEne = bb1
+   ``      if tEvent = 17 then rien !!! (battles)
+           if tEvent = 18 then move(bb1) = bb2
+           if tEvent = 19 then Energ(bb1)=Energ(bb1)+bb2*256+bb3: if Energ(bb1)>EnMax(bb1) then Energ(bb1)=EnMax(bb1)
+           if tEvent = 20 then argent = argent + bb3*256+bb4 - (bb1*256+bb2)
+           if tEvent = 21 then play sound bb1
+           if tEvent = 23 then inThePlayList(bb1)=bb2
+           if tEvent = 25 then nbrPerso = bb1: OccupCase(tx,ty,nbrPerso)
+           if tEvent = 26 then withMe(bb1)=bb2-1
+           if tEvent = 28 then Level(bb1-1)=bb2: loadStathero(bb1-1)
+
+         read byte 2,tEvent
+         if tEvent = 0 then close file 2
+
+
+
+      `` sinon, on est dans aucun événement
+      else
+         key = 0
+         `` on regarde la saisie clavier
+         tmp = keystate(key(5))*4 + keystate(key(6))*8 + keystate(key(4))*2 + keystate(key(3))
+
+         `` appuie-t-on sur une seule touche ???
+         one_key=0
+         for i = 0 to 3
+            if tmp = 2^i then one_key=1: key = tmp
+         next i
+
+         if one_key=0
+            `` purge les directions impossibles
+              if vr(tmp and 4) and y(0)/4<ty-1 and vr(nivo(x(0)/4, (y(0)/4)+1, 3) and 4) then dec tmp, 4
+            if vr(tmp and 8) and x(0)>0      and vr(nivo((x(0)/4)-1, y(0)/4, 3) and 8) then dec tmp, 8
+            if vr(tmp and 2) and x(0)/4<tx-1 and vr(nivo((x(0)/4)+1, y(0)/4, 3) and 2) then dec tmp, 2
+            if vr(tmp and 1) and y(0)>0      and vr(nivo(x(0)/4, (y(0)/4)-1, 3) and 1) then dec tmp, 1
+
+            `` on enleve la dir actuelle si une autre touchée est op
+            if vr(tmp and di(0)) and tmp<>di(0) then key2 = tmp-di(0) else key2=tmp
+
+            `` on chois une direction parmi celles possibles
+            for i = 3 to 0 step -1
+               if key2 and 2^i then key = 2^i
+            next i
+         endif
+
+         keys = key
+         for i = 0 to nbrPerso
+            if (i>0)
+               if rnd(10)=1
+                  if move(i) = 1 then keys = 2^(rnd(3)) else keys = 0
+                  if move(i) = 2 then di(i) = 2^(rnd(3))
+               else
+                  keys = 0
+               endif
+            endif
+
+            if keys
+               if keys = 4 and y(i)/4<ty-1 and fx(nivo(x(i)/4, (y(i)/4)+1, 3) and 4) then nivo(x(i)/4, (y(i)/4)+1, 3) = 15: nivo(x(i)/4, y(i)/4, 3) = (decorB(nivo(x(i)/4, y(i)/4, 1)) | decorH(nivo(x(i)/4, y(i)/4, 2))): y(i) = y(i) +1
+               if keys = 8 and x(i)>0      and fx(nivo((x(i)/4)-1, y(i)/4, 3) and 8) then nivo((x(i)/4)-1, y(i)/4, 3) = 15: nivo(x(i)/4, y(i)/4, 3) = (decorB(nivo(x(i)/4, y(i)/4, 1)) | decorH(nivo(x(i)/4, y(i)/4, 2))): x(i) = x(i) -1
+               if keys = 2 and x(i)/4<tx-1 and fx(nivo((x(i)/4)+1, y(i)/4, 3) and 2) then nivo((x(i)/4)+1, y(i)/4, 3) = 15: nivo(x(i)/4, y(i)/4, 3) = (decorB(nivo(x(i)/4, y(i)/4, 1)) | decorH(nivo(x(i)/4, y(i)/4, 2))): x(i) = x(i) +1
+               if keys = 1 and y(i)>0      and fx(nivo(x(i)/4, (y(i)/4)-1, 3) and 1) then nivo(x(i)/4, (y(i)/4)-1, 3) = 15: nivo(x(i)/4, y(i)/4, 3) = (decorB(nivo(x(i)/4, y(i)/4, 1)) | decorH(nivo(x(i)/4, y(i)/4, 2))): y(i) = y(i) -1
+               di(i) = keys
+            endif
+         next i
+            keys = key: key = 0
+
+         ``dialogue ac les autres perso
+         if keystate(key(1))
+               act = 0
+            for i = 1 to nbrPerso
+               if di(0) = 8 and x(0) = x(i)+4 and y(0) = y(i) then act = i: di(i) = 2
+               if di(0) = 4 and x(0) = x(i) and y(0) = y(i)-4 then act = i: di(i) = 1
+               if di(0) = 2 and x(0) = x(i)-4 and y(0) = y(i) then act = i: di(i) = 8
+               if di(0) = 1 and x(0) = x(i) and y(0) = y(i)+4 then act = i: di(i) = 4
+            next i
+            if act>0 and evPerso(act)>0
+               positionne_file(evPerso(act))
+               read byte 2, tEvent
+            endif
+         endif
+      ``fin du if/else tEvent...
+      endif
+
+
+
+
+   `` le perso principal est en mvt
+   else
+      x0 = x(0): y0 = y(0)
+
+      `` si les perso sont en mvt, il faut qu'ils marchent
+      for i = 0 to nbrPerso
+         if ((x(i)/4 <> x(i)/4.0) or (y(i)/4 <> y(i)/4.0))
+            if di(i) = 4 then y(i) = y(i) + 1
+            if di(i) = 8 then x(i) = x(i) - 1
+            if di(i) = 2 then x(i) = x(i) + 1
+            if di(i) = 1 then y(i) = y(i) - 1
+         endif
+      next i
+
+      `va-t-il y avoir un combat ?
+      if (x0 <> x(0) or y0 <> y(0)) and ((x(0)/4 = x(0)/4.0) and (y(0)/4 = y(0)/4.0))
+         if RoundWhereNoBattle>0 then dec RoundWhereNoBattle
+
+           if tEvent = 0 and nivo(x(0)/4,y(0)/4,4)=0 and RoundWhereNoBattle=0
+            if rnd(100) < FreqCombatMap
+               for i = 1 to nbrCrea
+                  if rnd(100) < FreqEne(i)
+                     inc nbrEne
+                     load_for_battle(nbrEne,NumEne(i), LevEne(i))
+                     if rnd(10)=0 then surprise = 1*fx(nbrEne) else surprise =0
+                     if nbrEne = 3 then exit
+                  endif
+               next i
+            endif
+            cptr(3)=1
+         endif
+      endif
+
+   ``fin du si ((x(i)/4 <> x(i)/4.0) or ... => everyone_static
+   endif
+
+      if (y(0)- decalY) > 40 and (ty*4)-y(0) => 20 then inc decalY
+      if (x(0)- decalX) > 56 and (tx*4)-x(0) => 24 then inc decalX
+      if (y(0)- decalY) < 20 and decalY > 0 then dec decalY
+      if (x(0)- decalX) < 28 and decalX > 0 then dec decalX
+
+   if tEvent = 0 or tEvent = 10 or tEvent = 17
+      ``affichage
+      cptr(3) = RoundWhereNoBattle
+      affichage(nbrPerso, decalX, decalY)
+      cpt = mod(cpt + 1, 4)
+      do_maximize()
+   endif
+
+
+   if keystate(key(0))
+      if tEvent=0
+         menu(nbrPerso, decalX, decalY,im_4_sav,argent, level)
+      else
+         set text to normal: ink rgb(128,128,128),0
+         fade bitmap 0,40: center text 160,110,"PAUSE"
+             do_maximize()
+         repeat: display_maximize() : until keystate(key(1))
+         set text to italic: ink rgb(255,255,255),0: fade bitmap 0,100
+      endif
+   endif
+
+   `` combat
+   if nbrEne > 0 and (tEvent = 0 or tEvent = 17)
+      sync rate taux/2
+      combat(nbrEne,fightPlay(),surprise,vr(tEvent), imageBackgrdBattle)
+      sync rate taux
+      nbrEne = 0: surprise=0
+      PlayMusicAdvent()
+      RoundWhereNoBattle = SafeArea + rnd(2)
+   endif
+
+until 0
+
+cls 0: flush video memory: end
+
+
+
+
+
+
+`##############################################################
+`###                         D A T A                        ###
+`##############################################################
+
+nivB:
+data  0, 0, 0, 0, 0, 9, 8,12
+data  0, 0, 0, 0, 0, 1, 0, 4
+data  0, 0, 0, 0,15, 3, 2, 6
+data 12, 0,15,15, 0, 0, 0, 0
+data  6, 0, 0, 1, 0, 0, 0, 0
+data 15,15,15,15, 0, 0, 0, 0
+data  0, 0, 0,15, 0, 0, 0, 0
+data  0, 0, 0, 0, 0,13, 4, 1
+data  4, 1, 4, 1, 0, 0,15,15
+data  0,15,15,15, 0,15, 1, 4
+data 15,15,15, 0,15,15,15, 0
+data 15,15, 0, 0,15,15,15, 0
+data 15,15,15, 0,15,15,15, 0
+data 15,15,15,15,15,15, 0, 0
+data  0, 0, 0,15,15,15, 0, 0
+data 15,15, 0,15,15,15,15,15
+data  0, 0, 0,15,15,15,15,15
+data  0, 0, 0,15,15,15, 0, 0
+
+
+nivH:
+``1->5
+data  0, 0,13, 0,15, 0, 0,15
+data  0, 0, 0,15,15,15,15,15
+data  0, 0, 0, 0, 0,15, 0,15
+data  0, 0, 0,15,15, 0,15, 0
+data 15,15,15,15,15, 0,15,15
+data 15,15,15,15,15, 0,15,15
+data 15,15,15,15,15, 0,15,15
+data 15,15,15,15,15,15,15,15
+data  0, 0, 0,15,15,15,15,15
+data  0,15, 0,15,15,15,15,15
+
+``6->10
+data 15, 0, 0, 0, 0, 0,15, 0
+data  0, 0,15,15,15, 0,15, 0
+data  0,15,15,15,15,15, 5,15
+data 15,15,15,15,15,15,15, 0
+data 15, 0,15, 0,15, 0,15,15
+data 15, 1, 0, 0,15, 0,15,15
+data 15, 1,15, 1,15,15,15,15
+data 15, 1, 0, 0,15,15,15,15
+data  0,15, 0,15,15,15,15,15
+data  0,15,15,15,15,15,15,15
+
+``11->15
+data 15, 0,14,10,11,12, 9, 5
+data 10, 3, 6,15, 0,15,15,15
+data  0, 0,15,15,15, 0, 0,15
+data 15,15, 0, 0, 0, 0, 0, 0
+data  0,15, 0,15,15, 0, 0,15
+data 15, 0,15,15,15,15, 0,15
+data 15,15,15,15,15,15,15,15
+data 15,15,15,15,15, 0, 0, 0
+data 15,15,15,15,15,15,15,15
+data  0,15,15, 0,15, 0,15,15
+
+``16->20
+data  0,15,15, 1,15, 0,15,15
+data 15,15,15,15,15,15,15,15
+data 15, 0, 0,15, 0,15, 7,15
+data  0, 7,13,13, 7,15, 0, 0
+data  0, 0, 0,15, 0, 0,15,15
+data  0, 0,15,15,15,15, 0, 0
+data  0, 0, 0, 0, 0, 0,15,15
+data  0, 0,15,15, 0,15, 0, 0
+data  0, 0, 0, 0, 0, 0,15,15
+data 15, 0, 0,15, 0, 0, 0,15
+
+``21->25
+data  0, 0, 0,15, 0,15,15,15
+data 15,15, 0,15,15, 0, 0,15
+data  0, 0,15, 0, 0,15,15,15
+data 15,15,15,15,15,15,15,15
+data  0, 0,15, 0, 0,15,15,15
+data 15, 0,15,15, 0, 0, 0, 0
+data  0, 0, 0, 0, 0, 0, 0, 0
+data  0, 0, 0, 0, 0, 0, 0, 0
+data  0, 0, 0, 0, 0, 0,15,15
+data 15, 0, 0, 0, 0, 0, 0, 0
+
+
+
+
+haut:
+``1->5
+data 0,1,0,1,0,2,1,0
+data 3,5,4,0,0,2,1,0
+data 6,5,4,0,0,5,1,0
+data 3,5,4,1,0,1,0,0
+data 4,3,2,1,0,7,6,5
+data 4,3,2,1,0,7,6,5
+data 4,3,2,1,0,7,6,5
+data 0,0,0,0,0,0,0,0
+data 3,2,1,0,0,0,0,0
+data 1,0,1,0,1,1,1,1
+
+``6->10
+data 0,2,2,2,2,2,0,0
+data 5,5,4,3,2,0,0,0
+data 0,6,5,4,3,2,0,0
+data 7,6,5,4,3,2,1,0
+data 0,0,0,0,0,3,2,1
+data 2,1,3,2,1,2,1,2
+data 0,1,0,1,0,0,1,0
+data 0,1,0,2,1,0,1,0
+data 1,0,1,0,1,0,1,0
+data 2,1,0,1,0,1,0,0
+
+``11->15
+data 0,0,0,0,0,0,0,0
+data 0,0,0,0,3,2,1,0
+data 0,3,2,1,0,0,3,2
+data 1,0,0,3,3,3,3,3
+data 1,0,1,0,0,1,1,0
+data 0,1,0,1,0,0,1,0
+data 0,1,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0
+data 2,1,2,1,2,1,2,1
+data 1,0,0,1,0,1,0,0
+
+``16->20
+data 1,0,0,1,0,1,0,0
+data 2,1,2,1,2,1,1,1
+data 0,0,2,1,2,1,0,0
+data 0,0,0,0,0,0,0,0
+data 3,2,1,0,2,1,0,2
+data 1,0,0,0,0,0,0,0
+data 3,2,0,0,2,1,0,2
+data 1,0,0,0,2,1,0,0
+data 3,2,0,0,2,1,0,2
+data 1,0,2,1,0,3,2,1
+
+``21->25
+data 3,2,1,0,2,1,0,0
+data 0,0,2,1,0,3,2,1
+data 3,2,1,3,2,1,0,0
+data 0,0,2,1,0,0,0,0
+data 3,2,1,3,2,1,0,0
+data 0,0,2,1,0,0,0,0
+data 0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0
+
+
+hautAnime:
+data 0,0,0,0
+data 1,1,1,1
+data 0,0,0,0
+
+
+
+
+statsObj:
+data 5,3,7,4,10,10,8,5,10,5,0,0,0,0,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 2,2,0,0,0,0,0,0,0,0,0,0,15,15,0,0
+data 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 1,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+data 0,0,0,0,5,5,0,0,0,0,0,0,0,0,0,0
+data 4,4,0,0,15,10,20,13,2,0,5,0,10,0,40,0
+
+
+`##############################################################
+`###                   ___________________                  ###
+`###                  /                   \                 ###
+`###                  | F O N C T I O N S |                 ###
+`###                  \___________________/                 ###
+`###                                                        ###
+`##############################################################
+
+
+``File by b!g b@$s
+
+
+function getP2(a)
+   i=0
+   while a> 2^(i) : inc i : endwhile
+endfunction i
+
+function mod(a, b)
+  if b=0 then exitfunction a
+  c = a - (a/b) * b
+  if c<0 then c = b+c
+endfunction c
+
+function vr(a)
+   if a > 0 then a = 1 else a = 0
+endfunction a
+
+function fx(a)
+   if a = 0 then a = 1 else a = 0
+endfunction a
+
+function getPerso(i)
+   for j = 0 to 2
+      if withMe(j) = i then exitfunction j
+   next j
+endfunction -1
+
+
+function str3$(a)
+   a$ = str$(a): while len(a$)<3: a$ = "0"+a$: endwhile
+endfunction a$
+
+function str2$(a)
+   a$ = str$(a): while len(a$)<2: a$ = "0"+a$: endwhile
+endfunction a$
+
+
+
+``###############################################################
+``#                      FONCTIONS MAXIMIZE                     #
+``###############################################################
+``##                                                           ##
+``#   Ceci est fait pour transformer l'image de 320x240 en      #
+``#  image plus grande pour remplir l'écran: 640x480.           #
+``#  Voici les deux fonctions nécessaires:                      #
+``#      - init_maximize() // à la place de cls                 #
+``#      - do_maximize()   // à la place de sync                #
+``##                                                           ##
+``###############################################################
+
+function createlog()
+   LOG_FILE$ = "log.txt"
+   if file exist(LOG_FILE$) then delete file LOG_FILE$
+   open to write 30, LOG_FILE$
+endfunction
+
+function log(message$)
+   write string 30, message$
+endfunction
+
+
+function init_maximize()
+   hide sprite maximize(2)
+   set current bitmap maximize(0): cls
+   set current bitmap maximize(1): cls
+endfunction
+
+function init2_maximize()
+   set current bitmap maximize(1)
+endfunction
+
+function display_maximize()
+   set current bitmap maximize(0)
+   hide sprite maximize(2)
+   paste sprite maximize(2), 0,0
+   sync
+   set current bitmap maximize(1)
+endfunction
+
+function do_maximize()
+   set current bitmap maximize(1)
+   get image maximize(3), 0,0, 320,240
+   sprite maximize(2), 0,0, maximize(3)
+   scale sprite maximize(2), 200
+   set sprite maximize(2), 1, 0
+   display_maximize()
+endfunction
+
+
+
+
+
+``###############################################################
+``#                      FONCTION CHARGEMENT                    #
+``###############################################################
+``##                                                           ##
+``#   C'est ici que s'effectue le chargement des médias :       #
+``#             - les images des différentes couches (tiles)    #
+``#             - les images des personnages et leur tête       #
+``#             - les images effets spéciaux  et des monstres   #
+``#             - les images des arrières plan des combats      #
+``#             - les les sons                                  #
+``##                                                           ##
+``###############################################################
+
+`` Fonction de chargement des éléments
+function charge_images()
+
+open to read 4, "Maps\size.dat"
+   read byte 4,xx1: read byte 4,yy1: read byte 4,xx2: read byte 4,yy2
+   read byte 4,xa1: read byte 4,ya1: read byte 4,xb1: read byte 4,yb1
+close file 4
+
+
+`_ _ _ _ _ _ _ _ _ _    Chargement des Perso   _ _ _ _ _ _ _ _ _ _
+
+load bitmap "Images\perso.PNG",1: im = 11: x = 0: y = 0
+for k = 0 to 11
+   for j = 0 to 7
+      for i = 0 to 2: inc im
+           get image im, (i*24)+(k*72), (j*32), (k*72)+(i+1)*24, (j+1)*32
+      next i
+   next j
+next k
+delete bitmap 1
+
+
+`_ _ _ _ _ _ _ _ _ _    Chargement des têtes   _ _ _ _ _ _ _ _ _ _
+
+load bitmap "Images\tetes.PNG",1: im = 1500
+for i = 0 to 5
+   for j = 0 to 3: inc im
+      get image im, (i*24), (j*24), (i+1)*24, (j+1)*24
+   next j
+next i
+delete bitmap 1
+
+
+`_ _ _ _ _ _ _ _ _ _    Chargement des décors   _ _ _ _ _ _ _ _ _ _
+
+load bitmap "Images\basse.png", 1
+   im = 2000
+  for i = 0 to xx1 -1
+     for j = 0 to yy1 -1: inc im
+        get image im, i*16, j*16, (i+1)*16, (j+1)*16
+     next j
+  next i
+delete bitmap 1
+
+load bitmap "Images\basse_anime.png", 1
+   im = 3512
+  for i = 0 to xa1 -1
+     for j = 0 to ya1 -1: inc im
+        get image im, i*16, j*16, (i+1)*16, (j+1)*16
+     next j
+  next i
+delete bitmap 1
+
+load bitmap "Images\haute.png", 1
+   im = 6000
+  for i = 0 to xx2 -1
+     for j = 0 to yy2 -1: inc im
+        get image im, i*16, j*16, (i+1)*16, (j+1)*16
+     next j
+  next i
+delete bitmap 1
+
+load bitmap "Images\haute_anime.png", 1
+   im = 7512
+  for i = 0 to xb1 -1
+     for j = 0 to yb1 -1: inc im
+        get image im, i*16, j*16, (i+1)*16, (j+1)*16
+     next j
+  next i
+delete bitmap 1
+
+
+`_ _ _ _ _ _ _ _ _ _    Chargement des monstres   _ _ _ _ _ _ _ _ _ _
+
+for i = 1 to 17
+   load image "Battles\Monsters\"+str3$(i)+".PNG",1699+i
+next i
+
+`_ _ _ _ _ _ _ _ _    Chargement des autres images   _ _ _ _ _ _ _ _ _
+
+for i = 1 to 2
+   load image "Battles\Bcgd\"+str2$(i)+".PNG",1949+i
+next i
+
+load image "Images\dialogue.png",1990
+load image "Images\gain.png",1991
+load image "Images\main.png",1992
+load image "Images\nom.PNG",1993
+load image "Images\Menu1.PNG",1995
+load image "Images\Menu2.PNG",1996
+load image "Images\Menu3.PNG",1997
+load image "Images\Menu4.PNG",1998
+load image "Images\Menu5.PNG",1999
+
+
+load bitmap "Battles\Images\coups.PNG",1
+   for i = 0 to 3: get image 5000+i, i*50,0, (i+1)*50, 55: next i
+delete bitmap 1
+
+load bitmap "Battles\Images\Explosion.PNG",1
+   for i = 0 to 2: get image 5004+i, i*60,0, (i+1)*60, 48: next i
+delete bitmap 1
+
+load bitmap "Images\objets.PNG",1: im = 5020
+   for i = 0 to 6: for j = 0 to 7: inc im
+      get image im, (i*22), (j*22), (i+1)*22, (j+1)*22
+   next j: next i
+delete bitmap 1
+
+
+`_ _ _ _ _ _ _ _ _ _    Chargement des sons    _ _ _ _ _ _ _ _ _ _
+
+load sound "Sound\menu_cant.wav",1   :``on peu pas
+load sound "Sound\menu_done.wav",2   :``retour
+load sound "Sound\menu_sel.wav", 3   :``ok
+load sound "Sound\menu_cli.wav", 4   :``déplacement
+load sound "Sound\comb_att.wav", 5   :``attaquer
+load sound "Sound\comb_die.wav", 6   :``mourir
+load sound "Sound\comb_ent.wav", 7   :``intro combat
+load sound "Sound\menu_pot.wav", 8   :``prise d'une potion
+load sound "Sound\move_rock.wav",9   :``déplacement de la statut
+
+``fin de la fonction de chargement
+endfunction
+
+
+
+
+`` fonction de chargement des musiques
+function load_musiques()
+
+   open to read 4,"Music\Music.dat"
+      for j = 0 to 3
+            read byte 4,nbMusType(j)
+      next j
+
+   g = 0
+   for i = 1 to numMusic(4)
+      read word 4,dureeMusic(i)
+      init_maximize()
+
+      paste image 1999, 62, 87
+      ink rgb(255,255,255),0: text 75, 98, cmd$(51)
+      ink 0,0: box 80, 115, 80+5*32, 130
+
+      g = g + 1
+      file$ = "Music\" + str3$(i)+".wma"
+
+      `` musique manquante
+remstart
+      if file exist(file$)=0
+         cls: print "Des musiques sont manquantes"
+         print "Veuillez télécharger la démo précédente"
+         print "afin de pouvoir les récupérer"
+         print " " : print "Elles se situent dans le dossier '/Music'"
+         wait key: end
+      endif
+remend
+      `` affichage de la progression
+      for j = 1 to g
+         ink rgb(255,(j-1)*8,0),0
+         box 80+5*(j-1), 115, 80+5*j, 130
+      next j
+
+      if file exist(file$) then load music file$,i
+      do_maximize()
+
+   next i
+   close file 4
+endfunction
+
+
+
+
+
+``###############################################################
+``#                         FONCTION INTRO                      #
+``###############################################################
+``##                                                           ##
+``#    C'est ici que s'effectue le lancement de l'intro :       #
+``#                     - unload_img_intro()                    #
+``#                     - load_img_for_intro()                  #
+``#                     - play_intro_anim()                     #
+``#                     - intro_menu(choix)                     #
+``#                     - ChoiceGameToLoad()                    #
+``#                     - ReadMot$(numFile)                     #
+``#                     - afficheSaveLoad(numTexte, CurY)       #
+``#                     - ControleSavedFile(num)                #
+``#                     - GetInfoToSavedFile(num, file)         #
+``##                                                           ##
+``###############################################################
+
+
+`` suppression des images pour l'intro
+function unload_img_intro()
+   for i = 1 to 36: delete image 10000+i: next i
+   stop music 1: delete music 1
+endfunction
+
+
+`` chargement des images pour l'intro
+function load_img_for_intro()
+   load image "Images\Intro\title.PNG",10001
+
+   for i = 1 to 32
+      load image "Images\Intro\intro_"+str2$(i)+".PNG",i+10001
+   next i
+
+   load bitmap "Images\Intro\cadre.PNG", 1
+      get image 10034, 0,  0, 109, 15
+      get image 10035, 0, 15, 109, 31
+      get image 10036, 0, 32, 109, 47
+   delete bitmap 1
+
+   load image "Images\main.png",1992
+   load music "Music\intro.wma",1
+endfunction
+
+
+`` affiche les images => séquence animée
+function play_intro_anim()
+   play music 1
+   t = timer()
+   repeat
+      init_maximize()
+      paste image 10001, 100, 80
+      do_maximize()
+   until scancode()>0 or timer()-t>3500
+
+   for i = 2 to 33
+      init_maximize()
+      paste image 10000+i,0,0
+      if scancode()=0 then can_exit=1
+      if scancode()>0 and can_exit then exitfunction
+      do_maximize()
+   next i
+endfunction
+
+
+function intro_menu(cpt)
+   sync rate taux
+   quitter = 0
+   ink 0, 0
+   can_do=0
+
+   repeat
+      init_maximize()
+      paste image 10033,0,0
+      if cpt < 6 then inc cpt
+
+      `` affichage du cadre
+      paste image 10036, 115, 170, 1
+      for i = 1 to cpt/2
+         paste image 10035, 115, 170 - 16*i, 1
+      next i
+      paste image 10034, 115, 171 - 16*((cpt/2)+1), 1
+
+      `` affichage du texte
+      if cpt = 6
+         for i = 1 to 3
+            center text 170, 170-(16*(4-i)), cmd$(47+i)
+         next i
+      endif
+
+      `` affichage de la fleche
+      if choix >= 0 and cpt = 6
+         paste image 1992, 110, 170 - (16*(3-choix)), 4
+      endif
+
+      if scancode()=0 then can_do=1
+
+      if k=0 and can_do
+         if keystate(key(3)) then k = 1: choix = mod(choix-1, 3): play sound 4
+         if keystate(key(5)) then k = 2: choix = mod(choix+1, 3): play sound 4
+         if keystate(key(1)) then k = 4
+      else
+         if scancode() = 0
+            if k = 4 then quitter = 1: play sound 3
+            k = 0
+         endif
+      endif
+
+      do_maximize()
+   until quitter
+
+endfunction choix+1
+
+
+
+`` choix de la partie à charger
+function ChoiceGameToLoad()
+   y = 0
+   enableOk = 0
+   choice = -1
+   ink rgb(255,255,255),0
+   Save$(1,0) = "1"
+   for i = 1 to 3
+      ControleSavedFile(i)
+   next i
+
+   repeat
+      init_maximize()
+      afficheSaveLoad(52, y)
+
+      if scancode()=0 then enableOk=1
+
+      if enableOk and k=0
+         if keystate(key(3)) then k = 1: y = mod(y-1, 4): play sound 4
+         if keystate(key(5)) then k = 2: y = mod(y+1, 4): play sound 4
+         if keystate(key(0)) or keystate(key(2)) then k = 8
+         if keystate(key(1))
+            if Save$(1,mod(y+1,4))="1" then k = 4 else play sound 1
+         endif
+      else
+         if scancode() = 0
+            if k = 4
+               choice = mod(y+1,4)
+               if choice then play sound 3 else play sound 2
+            endif
+            if k = 8 then choice = 0: play sound 2
+            k = 0
+         endif
+      endif
+      do_maximize()
+   until choice <> -1
+
+   exitfunction choice
+endfunction
+
+
+`` affiche la page Chargement/Enregistrement d'une partie
+function afficheSaveLoad(numTexte, CurY)
+   paste image 1996,0,0
+   text 20,18,cmd$(numTexte)
+
+   for i = 1 to 3
+      if Save$(1,i) = "1"
+         text 45, 20+45*i, cmd$(53) + " " +str$(i) + ": " + Save$(2,i)+"  "+Save$(3,i)
+         for j = 1 to 3
+            if Save$(3+j,i) <> "255"
+               paste image 1501+val(Save$(3+j,i)),40+j*30, 45*i+39
+            endif
+         next j
+      else
+         text 45, 20+45*i, cmd$(56)
+      endif
+   next i
+   text 45,20+45*4,cmd$(54)
+   paste image 1992, 18, 23+45*(CurY+1),0
+endfunction
+
+
+
+`` vérifie que le fichier exist bien et qu'il commence par 'Lio'
+function ControleSavedFile(num)
+   if file exist("SAVE\save"+Str2$(num)+".dat")
+      open to read 5, "SAVE\save"+Str2$(num)+".dat"
+         read byte 5, a
+         read byte 5, b
+         read byte 5, c
+
+         if a = asc("L") and b = asc("i") and c = asc("o")
+            Save$(1,num) = "1"
+            GetInfoToSavedFile(num,5)
+         endif
+
+      close file 5
+   endif
+endfunction
+
+
+
+`` récupère les info des fichiers de sauvegarde
+function GetInfoToSavedFile(num, file)
+   Save$(2,num) = ReadMot$(file):   `` récupère la date
+   Save$(3,num) = ReadMot$(file):   `` récupère l'heure
+   for i = 1 to 3
+      Read Byte file, a
+      Save$(3+i,num) = Str$(a)
+   next i
+endfunction
+
+
+
+`` récupère un mot des fichiers de sauvegarde
+function ReadMot$(numFile)
+   read byte numFile, lg
+   a$ = ""
+   for i = 1 to lg
+      read byte numFile, b
+      a$ = a$ + chr$(b)
+   next i
+   exitfunction a$
+endfunction a$
+
+
+
+
+
+``###############################################################
+``#                      FONCTION AFFICHAGE                     #
+``###############################################################
+``##                                                           ##
+``#        C'est ici que s'effectue l'affichage de la map.      #
+``#   La couche basse y est dabord affichée. Puis on effectue   #
+``#   un tri afin de gérer les couches et les altitudes par     #
+``#   rapport à la taille des personnages. Donc on affiche la   #
+``#   couche haute sous les personnages et où il n'y a personne.#
+``#   Puis on affiche le reste de la couche haute selon des     #
+``#   conditions prédéfinis.                                    #
+``##                                                           ##
+``###############################################################
+
+
+function affichage(nbrPerso, decalX, decalY)
+
+   hX = decalX/4: hY = decalY/4
+   for j = hY to hY+15
+      for i = hX to hX+20
+         `` actualise le décors : tiles animés
+         if nivo(i,j,1)>1511 and cptr(0)=0 then nivo(i,j,1) = nivo(i,j,1) + 1: if mod(nivo(i,j,1),4)=0 then nivo(i,j,1) = nivo(i,j,1) - 4
+         if nivo(i,j,2)>1511 and cptr(0)=0 then nivo(i,j,2) = nivo(i,j,2) + 1: if mod(nivo(i,j,2),4)=0 then nivo(i,j,2) = nivo(i,j,2) - 4
+
+         affi(i-hX,j-hY)=0
+         ``on affiche la couche basse
+         paste image nivo(i,j,1)+2001, ((i*4)-decalX)*4, ((j*4)-decalY)*4,0
+      next i
+   next j
+
+
+   ``tri des positions des perso
+   for j=0 to nbrPerso
+      x#=x(j)/4.0: y#=y(j)/4.0
+      if int(x#)-hX>=0 and int(x#)-hX<21 and int(y#)-hY>=0 and int(y#)-hY<16
+         if x# = int(x#)
+            affi(int(x#)-hX,int(y#)-hY)=j+1
+            if y# = int(y#)
+               if int(y#)>hY
+                  if affi(int(x#)-hX,int(y#)-(hY+1))=0 then affi(int(x#)-hX,int(y#)-(hY+1))=j+1
+               endif
+            else
+               if int(y#)-(hY+1)>0 and ( (int(y#)+0.25 = y#) or (int(y#)+0.5 = y#) ) then affi(int(x#)-hX,int(y#)-(hY+1))=j+1
+               if int(y#)+1-hY>=0
+                  if affi(int(x#)-hX,int(y#)+1-hY)=0 then affi(int(x#)-hX,int(y#)+1-hY)=j+1
+               endif
+            endif
+         else
+            affi(int(x#)-hX,int(y#)-hY)=j+1
+            if int(y#)>hY
+               if affi(int(x#)-hX,int(y#)-(hY+1))=0 then affi(int(x#)-hX,int(y#)-(hY+1))=j+1
+            endif
+            if int(x#)>hX
+               affi(int(x#)+1-hX,int(y#)-hY)=j+1
+               if int(y#)>hY
+                  if affi(int(x#)+1-hX,int(y#)-(hY+1))=0 then affi(int(x#)+1-hX,int(y#)-(hY+1))=j+1
+               endif
+            endif
+         endif
+      endif
+   next j
+
+   ``affichage ligne / ligne
+   for j = hY to hY+15
+      for i = hX to hX+20
+         ``affichage décors où il n'y a pas de perso
+         if affi(i-hX,j-hY)=0
+            paste image 6001+nivo(i,j,2), ((i*4)-decalX)*4, ((j*4)-decalY)*4,0
+         else
+            if hauteur(nivo(i,j,2))<2 then paste image 6001+nivo(i,j,2), ((i*4)-decalX)*4, ((j*4)-decalY)*4,0
+            if affi(i-hX,j+1-hY)<>affi(i-hX,j-hY) and affi(i+1-hX,j-hY)<>affi(i-hX,j-hY)
+               ``affichage des personnages
+               k = affi(i-hX,j-hY)-1
+               im = im1(k): ni = nImage(k)
+               ``paste image im1(k) + nImage(k), (x(k)-decalX)*4 -4, ((y(k)-decalY)*4)-16,0
+               paste image im+ni, (x(k)-decalX)*4 -4, ((y(k)-decalY)*4)-16,0
+            endif
+         endif
+      next i
+   next j
+
+   ``complément d'affichage : couche haute où il y a des perso
+   for j = hY to hY+15
+      for i = hX to hX+20
+         if affi(i-hX,j-hY)>0 and hauteur(nivo(i,j,2))>0
+            if hauteur(nivo(i,j,2)) <= 1
+               if j>hY
+                  if affi(i-hX,j-(1+hY))=0 then paste image 6001+nivo(i,j-1,2), ((i*4)-decalX)*4, ((j*4)-(decalY+4))*4,0
+               endif
+               if affi(i-hX,j+1-hY)=0 then paste image 6001+nivo(i,j,2), ((i*4)-decalX)*4, ((j*4)-decalY)*4,0
+            endif
+         endif
+      next i
+   next j
+
+   for j = hY to hY+15
+      for i = hX to hX+20
+         if hauteur(nivo(i,j,2))>1
+            paste image 6001+nivo(i,j,2), ((i*4)-decalX)*4, ((j*4)-decalY)*4,0
+         endif
+      next i
+   next j
+
+
+``print "FPS : " ; Screen FPS()
+
+
+   if infoMusic(2) then ControleTimeOfMusic()
+
+endfunction
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+``###############################################################
+``#                        LES MUSIQUES                         #
+``###############################################################
+``##                                                           ##
+``#     Fonctions sur les musiques :                            #
+``#                     - PlayMusicAdvent()                     #
+``#                     - PlayMusicCombat(i)                    #
+``#                     - numMusic(i)                           #
+``#                     - ControleTimeOfMusic()                 #
+``##                                                           ##
+``###############################################################
+
+
+
+function PlayMusicAdvent()
+   if infoMusic(2) then stop music infoMusic(2)
+   if infoMusic(4)=0
+      if infoMusic(3)>1 or InfoMusic(2)=0
+         repeat
+            m = rnd(numMusic(2)-1)+1
+         until (m <> infoMusic(2) or infoMusic(3)=1) and inThePlayList(m)>0
+         infoMusic(2) = m
+      endif
+      play music infoMusic(2): infoMusic(1) = timer()
+   endif
+endfunction
+
+
+
+function PlayMusicCombat(i)
+   if infoMusic(2) then stop music infoMusic(2)
+   if infoMusic(4)=0
+      infoMusic(2) = rnd(nbMusType(i)-1) + numMusic(i)+1
+      infoMusic(1) = timer()
+      if i = 3 then loop music infoMusic(2) else play music infoMusic(2)
+   endif
+endfunction
+
+
+
+function numMusic(i)
+  som = 0
+  for j = 0 to i-1
+    som = som + nbMusType(j)
+  next j
+endfunction som
+
+
+
+function ControleTimeOfMusic()
+   if timer()-infoMusic(1) > 1000*dureeMusic(infoMusic(2))+200
+      if infoMusic(2)>0 then stop music infoMusic(2)
+      PlayMusicAdvent()
+   endif
+endfunction
+
+
+
+
+
+``###############################################################
+``#                      LES PERSONNAGES                        #
+``###############################################################
+``##                                                           ##
+``#   Fonctions sur les personnages :                           #
+``#                 - nImage(i)                                 #
+``#                 - OccupCase(tx,ty,nbrPerso)                 #
+``#                 - loadStathero(hero)                        #
+``##                                                           ##
+``###############################################################
+
+
+
+` _ _ _ _ _ _ _ _ image du personnage  _ _ _ _ _ _ _
+
+function nImage(i)
+   n = (getP2(di(i)) * 3)
+   dx = x(i) - (x(i)/4)*4
+   dy = y(i) - (y(i)/4)*4
+   if (dx + dy)/2 = (dx + dy)/2.0 then exitfunction n+1
+   exitfunction (n+(dx+dy)-1)
+endfunction
+
+
+` _ _ _ _ _ _  remplit le tablo d'occ des cases  _ _ _ _ _ _
+
+function OccupCase(tx,ty,nbrPerso)
+   for i = 0 to tx
+      for j = 0 to ty
+         nivo(i,j,3) = (decorB(nivo(i,j,1)) | decorH(nivo(i,j,2)))
+      next j
+   next i
+   for i = 0 to nbrPerso
+      nivo(x(i)/4, y(i)/4, 3) = 15
+   next i
+endfunction
+
+
+` _ _ _ _ MAJ stats d'un heros en fonction de son nivo _ _ _ _
+
+function loadStathero(hero)
+      exNext = 0
+   difVie = EnMax(hero)-Energ(hero)
+if file exist("Battles\Monsters\"+str3$(hero+1)+".dat")
+   open to read 6,"Battles\Monsters\"+str3$(hero+1)+".dat"
+      for i = 1 to Level(hero)
+         read word 6, EnMax(hero)
+         read byte 6, Recup(hero)
+         read byte 6, Force(hero)
+         read byte 6, Rapid(hero)
+         read byte 6, Agili(hero)
+         read byte 6, Preci(hero)
+         read long 6, nextL(hero): if i<Level(hero) then exNext = nextL(hero)
+      next i
+   close file 6: Energ(hero) = EnMax(hero)-difVie
+endif
+      if exPts(hero) < exNext then exPts(hero) = exNext
+endfunction
+
+
+
+``###############################################################
+``#                        LES FICHIERS                         #
+``###############################################################
+``##                                                           ##
+``#         - positionne_file(fic, ev)                          #
+``#         - chargementLangue(lang$)                           #
+``##                                                           ##
+``###############################################################
+
+
+function positionne_file(ev)
+      if file open(2) then close file 2
+   open to read 2, "Data\EVENT\event.dat"
+      for i = 2 to ev
+         read byte 2,a
+            while a <> 0
+               for j = 1 to 5: read byte 2, a: next j
+            endwhile
+               for j = 1 to 4: read byte 2, a: next j
+      next i
+endfunction
+
+
+
+` _ _ _ remplit les tableaux avec la bonne langue. _ _ _
+
+function chargementLangue(lang$, demo)
+   open to read 4,"Data\PERSO\perso.dat"
+      for i = 0 to 10
+         read string 4,nom$(i)
+      next i
+   close file 4
+
+   open to read 4,"Data\LANG\"+lang$+"\cmd.dat"
+      i = 0
+      while file end(4)=0
+         read string 4,cmd$(i)
+         inc i
+      endwhile
+   close file 4
+
+   open to read 4,"Data\LANG\"+lang$+"\battle.dat"
+      for i = 0 to 5
+         read string 4,msgCombat$(i)
+      next i
+   close file 4
+
+   open to read 4,"Data\LANG\"+lang$+"\objets.dat"
+      for i = 1 to 56
+         read string 4,nomObjet$(i)
+      next i
+   close file 4
+
+   if demo
+      open to read 4, "Data\KEYS\demo_keys.dat"
+      open to read 5, "Data\EQUIP\demo_equip.dat"
+   else
+      open to read 4, "Data\KEYS\keys.dat"
+      open to read 5, "Data\EQUIP\equip.dat"
+      disable escapekey
+   endif
+      for i = 0 to 6: read byte 4, key(i): next i
+
+      for i = 0 to 2
+         read byte 5, withMe(i)
+         if withMe(i)=100 then withMe(i)=-1
+      next i
+
+      for i = 0 to 10
+         for j = 0 to 3:   read byte 5, equip(j,i): next j
+         read byte 5, Level(i)
+         loadStathero(i): jauge(i) = (rnd(20)+5)*20
+      next i
+
+      for i = 1 to 56: read byte 5, nbrObj(i): next i
+   close file 4
+   close file 5
+endfunction
+
+`` Renvoi la langue et active le mode fenétré si besoin
+function getInfoForLaunching()
+Lang$ = "french"
+If file exist("Config.ini")
+  Open To Read 6, "Config.ini"
+  While File End(6)=0
+    Read String 6, a$
+    If Left$(a$,1)="["
+      a$ = Right$(a$,Len(a$)-1)
+      a$ = Lower$(Left$(a$,Len(a$)-1))
+      Read String 6, b$
+
+      Select a$
+        Case "langue"
+          Lang$ = b$
+        EndCase
+
+        Case "ecran"
+          If b$ = "fenetre"
+            set window on
+            set window title "Istria"
+            set window position 100,100
+          EndIf
+        Endcase
+      EndSelect
+
+    EndIf
+  EndWhile
+  Close File 6
+
+EndIf
+endfunction Lang$
+
+
+
+``###############################################################
+``#                        LES DIALOGUES                        #
+``###############################################################
+``##                                                           ##
+``#        Affichage d'un dialogue. On gère si une réponse est  #
+``#   attendue. On renvoi donc une des trois valeurs :          #
+``#          - 0 : pas de question                           #
+``#          - 1 : choix numéro 1 (YES en Gal)                  #
+``#          - 2 : deuxième choix                               #
+``##                                                           ##
+``###############################################################
+
+
+function dialogue(n, im, n$, nbrPerso, decalX, decalY)
+      choix = 0
+      dim t$(3): dim o$(3): ligne = 0
+   open to read 3, "Data\LANG\" +n$+"\dial.dat"
+      for i = 1 to n: read string 3, a$: next i
+   close file 3
+         if left$(a$,1) = "#" then a$ = right$(a$,len(a$)-5)
+      for i = 1 to len(a$)
+         if mid$(a$,i) = "|"
+            t$(ligne)=left$(a$,i-1)
+            a$ = right$(a$, len(a$)-(i))
+            inc ligne: i = 0
+         endif
+      next i :      t$(ligne) = a$
+
+      for i = 0 to 2
+         for j = 1 to len(t$(i))
+            if mid$(t$(i),j)="&"
+               a = val(mid$(t$(i),j+1)+mid$(t$(i),j+2))
+               t$(i) = left$(t$(i),j-1)+nom$(a)+right$(t$(i),len(t$(i))-(j+2))
+            endif
+         next j
+      next i
+
+      ``pour qd il y a une rép à donner
+      rep1$ = "": rep2$=""
+      for i = 1 to len(t$(ligne))
+         if mid$(t$(ligne),i)="#" then rep1$ = left$(t$(ligne),i-1): rep2$ = right$(t$(ligne),len(t$(ligne))-i): t$(ligne) = "": choix = 1
+      next i
+
+      cpt = 0: cptr(0) = mod(cptr(0)-1,4)
+   repeat
+         init_maximize()
+         inc cpt,2: cptr(0)=mod(cptr(0)+1,4):cx = choix
+      affichage(nbrPerso, decalX, decalY)
+      paste image 1500+im,48,197
+      paste image 1990, 32,176,0
+      ink rgb(255,255,255),0
+
+      if cpt >= len(t$(0))+len(t$(1))+len(t$(2)) then cligno = 1: for i = 0 to ligne: o$(i) = t$(i): next i : text 90,209,rep1$ : text 190,209,rep2$ else cligno = 0
+      if cpt =< len(t$(0))+len(t$(1))+len(t$(2)) and cpt > len(t$(0))+len(t$(1)) then o$(2) = left$(t$(2), cpt -( len(t$(0))+len(t$(1)))): o$(1) = t$(1): play sound 4
+      if cpt =< len(t$(0))+len(t$(1)) and cpt > len(t$(0)) then o$(1) = left$(t$(1), cpt -(len(t$(0)))): o$(0) = t$(0): play sound 4
+      if cpt =< len(t$(0)) then o$(0) = left$(t$(0), cpt): play sound 4
+
+      if ligne > 0 then   for i = 0 to ligne: text 80, 183+(i * 13), o$(i): next i else text 80, 198,o$(0)
+
+      if keystate(key(6)) and choix >0 then choix = 1
+      if keystate(key(4)) and choix >0 then choix = 2
+
+      ``flèche clignotante
+      if cligno
+         if choix = 0 and mod(cpt,16)<8 then for i = 0 to 4: box 160-i, 230-i, 160+i, 230-i: next i
+         if choix = 1 then for i = 0 to 4: box  85-i, 218-i,  85-i, 218+i: next i
+         if choix = 2 then for i = 0 to 4: box 185-i, 218-i, 185-i, 218+i: next i
+      endif
+
+         if cx <> choix then play sound 4
+      k = keystate(key(1))
+         if k and cpt < 8 then k = 0
+         if k and cligno=0
+            t = mod(cpt,8): k = 0
+            cpt = len(t$(0))+len(t$(1))+len(t$(2))
+            while mod(cpt,8) <> t: inc cpt: endwhile
+         endif
+      do_maximize()
+   until   k > 0: play sound 3
+
+   ``pour le lachage de la touche 'Enter'
+   for i = 1 to 4
+      cptr(0) = mod(cptr(0)+1,4)
+      init_maximize(): affichage(nbrPerso, decalX, decalY): do_maximize()
+   next i
+
+endfunction choix
+
+
+
+
+``###############################################################
+``#                LES NOMS DES PERSONNAGES                     #
+``###############################################################
+``##                                                           ##
+``#      On entre le nom d'un personnage de l'aventure.         #
+``#   Le nom par défaut est préalablement rentré. On peut donc  #
+``#   le modifier.                                              #
+``#      Puis on peut valider ou annuler (enregistre le nom par #
+``#   défault). Le nom sélectionné est retourné par cette fct.  #
+``##                                                           ##
+``###############################################################
+
+
+`` What's my name ???
+
+function getNom$(name$, im, aff, nbrPerso, decalX, decalY)
+   set text size 20: set text to bold
+   nom$ = name$: enableEnter = 0
+   ink rgb(255,255,255),0
+   xl = 0: yl = 0: xm = 2: entry = 0: cl = 0
+
+   restore lettres: for j= 0 to 4: for i = 0 to 15: read lettre$(i,j): next i: next j
+
+
+repeat
+   init_maximize()
+   inc cl: valid = 0: exl = xl: eyl = yl: exm = xm: ee = entry:n$ = nom$
+   cptr(0)=mod(cptr(0)+2,4): if aff then affichage(nbrPerso, decalX, decalY)
+   paste image im,48,30: paste image 1993,0,0,0
+
+   for j = 0 to 4: for i = 0 to 15: center text 38+i*16,83+j*18, lettre$(i,j): next i: next j
+   for i = 0 to 2: center text 82+i*80,201,cmd$(i): next i
+
+   ex_t2 = ex_t: ex_t = touche
+   touche = scancode()
+   if ex_t = touche then touche = 0
+   if entry=0 and ex_t2 = touche then touche = 0
+
+   if entry
+  ``dans les lettres
+      if touche = key(4)
+         inc xl
+         if xl = 6 or xl = 13 then inc xl
+         if xl = 16 then xl = 0
+      endif
+      if touche = key(6)
+         dec xl
+         if xl = 6 or xl = 13 then dec xl
+         if xl = -1 then xl = 15
+      endif
+      if touche = key(3) then dec yl: if yl = -1 then entry = 0
+      if touche = key(5) then inc yl: if yl =  5 then entry = 0
+      if touche = key(1) and enableEnter
+         if len(nom$)=8 then play sound 1
+         if len(nom$)<8 then nom$ = nom$ + lettre$(xl,yl): play sound 4: if len(nom$)=8 then entry=0: xm=2
+      endif
+   else
+  ``choix de l'action : OK, ANNULER ...
+      if touche = key(4) then inc xm
+      if touche = key(6) then dec xm
+      xm = mod(xm,3)
+      if touche = key(3) then yl=4: entry = 1
+      if touche = key(5) then yl=0: entry = 1
+
+      if touche = key(1) and enableEnter
+         if xm = 0
+            if len(nom$)>0 then nom$ = left$(nom$,len(nom$)-1): play sound 2 else  play sound 1
+         endif
+         valid = xm
+      endif
+   endif
+
+   enableEnter = fx(keystate(key(1)))
+   afficheBoiteNom(entry, xl, yl, xm, nom$, cl): do_maximize()
+
+  ``réaffichage pr temporiser
+   if exl <> xl or eyl <> yl or ee <> entry or exm <> xm or nom$ <> n$
+      if nom$ = n$
+         play sound 4
+      else
+         inc cl: afficheBoiteNom(entry, xl, yl, xm, nom$, cl): do_maximize()
+      endif
+      inc cl: afficheBoiteNom(entry, xl, yl, xm, nom$, cl): do_maximize()
+      inc cl: afficheBoiteNom(entry, xl, yl, xm, nom$, cl): do_maximize()
+   endif
+
+until valid
+
+lettres:
+   data "A", "B", "C", "D", "E", "F", " ", "a", "b", "c", "d", "e", "f", " ", "0", "5"
+   data "G", "H", "I", "J", "K", "L", " ", "g", "h", "i", "j", "k", "l", " ", "1", "6"
+   data "M", "N", "O", "P", "Q", "R", " ", "m", "n", "o", "p", "q", "r", " ", "2", "7"
+   data "S", "T", "U", "V", "W", "X", " ", "s", "t", "u", "v", "w", "x", " ", "3", "8"
+   data "Y", "Z", ".", ",", "?", "!", " ", "-", "'", "é", " ", "y", "z", " ", "4", "9"
+
+   set text size 17: set text to italic: ink rgb(255,255,255),0
+   if valid = 1 then play sound 2: nom$ = name$
+   if valid = 2 then play sound 3
+endfunction nom$
+
+
+
+`` fct supplémentaire pour "What's my name ?"
+
+function afficheBoiteNom(entry, xl, yl, xm, nom$, cl)
+   if entry then paste image 1992, 19+xl*16,88+yl*18,0 else paste image 1992, (70+xm*80)-(text width(cmd$(xm))/2), 205,0
+   if mod(cl,6)<2 and len(nom$)<8 then i = 163+len(nom$)*11: box i,57,i+6,57
+   for i = 1 to len(nom$): center text 155+i*11,40,mid$(nom$,i): next i
+endfunction
+
+
+
+
+``###############################################################
+``#            FCTS COMPLEMENTAIRES PR LES COMBATS              #
+``###############################################################
+``##                                                           ##
+``#    On entre le nom d'un personnage de l'aventure.           #
+``#          - affich_combat(ar_p,nE,nJ,cl)                     #
+``#          - jauge_pleine(nJ)                                 #
+``#          - tous_mort(nE,nJ)                                 #
+``#          - pos_combat(nbrEne,nbrJou)                        #
+``#          - tous_mort(nE,nJ)                                 #
+``#          - fightPlay()                                      #
+``#          - load_for_battle(nbrEne,num,level)                #
+``#          - ecran_noir()                                     #
+``#          - max_attaker()                                    #
+``#          - attrib_pts(nE, officiel)                         #
+``#          - getIssuAttaquer(attaker, to_attak, offi,nous)    #
+``##                                                           ##
+``###############################################################
+
+
+
+
+`##################   affichage des scènes de combat   #############
+function affich_combat(ar_p,nE,nJ,cl)
+   rem cls 0
+   paste image 1949+ar_p,0,0
+
+   for i = 11 to nE+10
+      if mort(i) = 0 and cl <> i then paste image 1700+mstIm(i-10),bex(i-10)+rnd(3)-(xIm(i-10)+1),bey(i-10)+rnd(2)-(yIm(i-10)+1),0
+   next i
+   for i = 0 to nJ-1
+      if mort(withMe(i)) = 0 and cl <> i then paste image 1700+withMe(i),bpx(i+1)-17,bpy(i+1)-24,0
+   next i
+endfunction
+
+
+`##############   test les jauges de ts les perso   ###############
+function jauge_pleine(nJ)
+   for i = 0 to nJ-1
+      if jauge(withMe(i))=500 and mort(withMe(i))=0 then exitfunction i
+   next i
+   for i = 11 to 13
+      if jauge(i)=500 and mort(i)=0 then exitfunction i
+   next i
+endfunction -1
+
+
+`##################### affichage de la jauge  ######################
+function affiche_jauge(nJ,par)
+   if par
+      if par = 1
+         set text to normal: set text size 14: ink 0,0
+         repeat: set text to normal: set text size 14: until text style() = 0 and text size() = 14
+      endif
+      c = 195
+      for i = 0 to nJ-1
+         j = withMe(i)
+
+         ink 0,0: box 230,c+9,270,c+10
+         box 230,c+5,270,c+6
+         if mort(j) = 0
+            if jauge(j) then ink rgb(255,255,0),0: box 230, c+9, 230+((jauge(j)*40)/500), c+10
+            r = 255: b = 0
+            for k = 0 to ((Energ(j)*40)/EnMax(j))
+               inc b,6: dec r,6
+               ink rgb(r,0,b),0: box k+230,5+c,k+230,6+c
+            next k
+         endif
+
+         if par = 1
+            ink rgb(255,0,0),0: if Energ(j)>0 then ink rgb(255,255,0),0
+            if (Energ(j)*100)/EnMax(j)>30 then ink 0,0
+            if (EnMax(j))>800 and (Energ(j)*100)/EnMax(j)>20 then ink 0,0
+            text 225-text width(nom$(j)), c,nom$(j)
+            text 275, c,str$(Energ(j))+"/"+str$(EnMax(j))
+         endif
+         inc c,12
+      next i
+         ink 0,0
+   else
+      paste image 1994, 150,180
+   endif
+endfunction
+
+
+`##################  test pr si le combat est fini ################
+function tous_mort(nE,nJ)
+      g = 0: m = 0
+   for i = 0 to nJ-1
+      if Energ(withMe(i))=0 then inc g
+   next i
+      if g = nJ then exitfunction 2
+   for i = 11 to 10+nE
+      if Energ(i)=0 then inc m
+   next i
+      if m = nE then exitfunction 1
+endfunction 0
+
+
+`################## position des combattants #####################
+function pos_combat(nbrEne,nbrJou)
+   if nbrEne = 1 then restore ene1
+   if nbrEne = 2 then restore ene2
+   if nbrEne = 3 then restore ene3
+      for i = 1 to nbrEne: read bex(i) : read bey(i): next i
+
+   if nbrJou = 1 then restore jou1
+   if nbrJou = 2 then restore jou2
+   if nbrJou = 3 then restore jou3
+      for i = 1 to nbrJou: read bpx(i) : read bpy(i): next i
+
+
+ene1:
+   data 40,125
+ene2:
+   data 43,105,32,140
+ene3:
+   data 35, 90,45,125,30,160
+
+jou1:
+   data 290,125
+jou2:
+   data 275,105,285,140
+jou3:
+   data 275, 95,295,125,285,158
+
+endfunction
+
+
+` _ _ _ nombre de personnage qui nous entoure pour l'aventure _ _ _
+
+function fightPlay()
+   a = 0
+   for i = 0 to 2
+      if withMe(i)>=0 then inc a
+   next i
+endfunction a
+
+` _ _ mets toutes les valeurs dans les tableaux pour le mode combat _ _
+
+function load_for_battle(nbrEne,num,level)
+   nMst = nbrEne+10: mstIm(nbrEne)=num-1
+   `charge les stats du monstre
+   open to read 4, "Battles\Monsters\"+str3$(num)+".dat"
+      for j = 1 to level
+         read word 4, Energ(nMst): EnMax(nMst) = Energ(nMst)
+         read byte 4, Recup(nMst)
+         read byte 4, Force(nMst)
+         read byte 4, Rapid(nMst)
+         read byte 4, agili(nMst)
+         read byte 4, Preci(nMst)
+         read byte 4, Degat(nMst)
+         read byte 4, Poids(nMst)
+         read byte 4, Defen(nMst)
+      next j
+         mort(10+nbrEne)=0
+   close file 4
+   open to read 4,"Battles\Monsters\size.dat"
+      for j = 10 to mstIm(nbrEne)
+         read byte 4,xIm(nbrEne): read byte 4,yIm(nbrEne)
+      next j
+   close file 4
+endfunction
+
+
+`noirci tt l'écran car il va y avoir un combat
+function ecran_noir()
+ink 0,0
+   for i = 0 to 30 step 2
+      if i = 4 then play sound 7
+      for j = 0 to 15
+         box i*20-j*20,j*15,(i+1)*20-((j*20)+1),((j+1)*15)-1
+         box 300+((j-1)*20)-(i*20), (15-j)*15, 319+((j-1)*20)-(i*20), 14+(15-j)*15
+      next j
+         if mod(i,4)=0 then do_maximize()
+   next i
+endfunction
+
+`renvoi le perso qui a les meilleurs stats par les joueurs non AI
+function max_attaker()
+   dim stmp(3)
+   for i = 0 to 2
+      if withMe(i) <> -1
+         if Energ(withMe(i))>0
+            stmp(i) = Force(withMe(i))+Rapid(withMe(i))+agili(withMe(i))+Preci(withMe(i))+(Degat(withMe(i))+Poids(withMe(i))+Defen(withMe(i)))/2
+         else
+            stmp(i) = 0
+         endif
+      else
+         stmp(i) = 0
+      endif
+   next i
+
+   if stmp(0) > stmp(1) and stmp(0) > stmp(2) then exitfunction stmp(0)
+   if stmp(1) > stmp(2) then exitfunction stmp(1)
+endfunction stmp(2)
+
+
+`attribution des points d'expérience
+function attrib_pts(nE, officiel)
+   ink rgb(255,255,255),0: set text to normal
+      #moyEne = 0
+   for i = 11 to nE+10
+      #moyEne = #moyEne + (Recup(i)-6)*4 + (( EnMax(i) + Force(i)*2+Rapid(i)*2+agili(i)*2+Preci(i)*2+Degat(i)*2+Poids(i)*1.5+Defen(i)*2 +RND(3))/3.0)
+   next i
+
+   #moyEne = 5 + (#moyEne /  nE)
+   #rapport = #moyEne / max_attaker()
+   if #rapport > 1 then #rapport = 1
+
+   #moy = #moyEne * #rapport + (nE -1) * (#moy * .2)
+   if officiel then #moy = #moy * (1.2 - (#moyEne / 1000))
+   for i = 0 to fightPlay()-1
+      givPt(i) = (#moy + kill(i)*#moy*0.1 + rnd(#moy)*.05) * fx(mort(withMe(i)))
+   next i
+
+   play sound 2
+      paste image 1996,0,0: center text  120,18,cmd$(39): wait 100
+      for i = 0 to fightPlay()-1
+         paste image 1501+withMe(i),25,78+i*50
+         text 56,74+i*50,nom$(withMe(i))
+         text 155,74+i*50,cmd$(42)+" : " + str$(givPt(i))
+      next i: do_maximize()
+   t = timer(): repeat: display_maximize(): until keystate(key(1))>0 or timer()-t>800
+   t = timer(): repeat: display_maximize(): until keystate(key(1))=0 or timer()-t>300
+
+      cpt = 0: valid = 0
+   repeat
+         init_maximize()
+         inc cpt
+      if valid = 0 then play sound 2
+      if keystate(key(1)) then valid = 1
+      paste image 1996,0,0
+      center text  120,18,cmd$(39)
+      for i = 0 to fightPlay()-1
+         if givPt(i)
+            givPt(i) = givPt(i) - 1: ExPts(withMe(i)) = ExPts(withMe(i)) + 1
+            if NextL(withMe(i))-ExPts(withMe(i))=0 and Level(withMe(i))<99 then play sound 3: Level(withMe(i)) = Level(withMe(i)) +1: loadStathero(withMe(i))
+         endif
+         paste image 1501+withMe(i),25,78+i*50
+         text  56,74+i*50,nom$(withMe(i))
+         text  56,92+i*50,cmd$(12)+" : " + str$(Level(withMe(i)))
+         text 155,74+i*50,cmd$(40)+" : " + str$(ExPts(withMe(i)))
+         if Level(withMe(i))<99 then text 155,92+i*50,cmd$(41)+" : " + str$(NextL(withMe(i))-ExPts(withMe(i)))
+      next i
+      if mod(cpt,6)=0 and valid=0 then do_maximize(): dec cpt,6
+   until givPt(0)=0 and givPt(1)=0 and givPt(2)=0
+    do_maximize()
+   repeat: display_maximize(): until keystate(key(1))=0
+   repeat: display_maximize(): until keystate(key(1))
+   stop music infoMusic(2)
+endfunction
+
+
+` _ _Notre attaque est bonne, esquivée ou loupée_ _
+function getIssuAttaquer(attaker, to_attak, officiel,nous)
+
+   `derniere ratée, dc celle ci est bonne
+   if loupe(attaker) then exitfunction 0
+
+   pb = rnd(11): p# = (RND(6)+6)/10.0
+   if pb < 2 then exitfunction 0   :``réussie
+   if pb = 2 then exitfunction 1   :``loupée
+   if pb = 3 then exitfunction 2   :``esquivée
+   if pb > 9 then exitfunction RND(2)
+
+   c1# = Preci(attaker) + Rapid(attaker) - Poids(attaker)
+   c2# = Preci(to_attak) + Rapid(to_attak) - Poids(to_attak)
+
+   dec pb, 3
+   if officiel
+      if nous then inc pb,2 else dec pb,2
+      if pb < 3 then pb = 3
+   endif
+
+   if pb < 7
+      if (c1#+Force(attaker))/(c2#+Force(to_attak)) < #p then exitfunction 2
+   else
+      if c1# / c2# < #p then exitfunction 2
+   endif
+
+endfunction 0
+
+
+
+
+
+
+
+
+
+``###############################################################
+``#                       FONCTION COMBAT                       #
+``###############################################################
+``##                                                           ##
+``#      Vous combattez vos ennemis seul ou à plusieurs.        #
+``#   Vous leur infligés des dégats calculés en fonction de vos #
+``#   statistiques. Vous pouvez utiliser des potions pour vous  #
+``#   soigner. Vous pouvez fuire si vous n'êtes pas dans un     #
+``#   combat officiel.                                          #
+``#      Si vous mourrez, la partie est fine => GAME OVER.      #
+``##                                                           ##
+``###############################################################
+
+
+`` _ _ _ _ Fonction principale _ _ _ _
+
+function combat(nE, nJ,surprise,officiel, ar_p)
+   set text to normal: ink 0,0: set text size 14
+   ecran_noir()
+   PlayMusicCombat(2)
+   ``calcul du poids et des dégats des combatants
+   for i= 0 to 10
+      a = 0: b = 0: if i < 3 then kill(i)=0: givPt(i)=0
+      for j = 0 to 3: a = a + objPoi(equip(j,i)): next j
+      for j = 1 to 3: b = b + objSta(equip(j,i)): next j
+      Defen(i) = b: Poids(i) = a: Degat(i) = objSta(equip(0,i)): if Degat(i) = 0 then Degat(i) = 1
+   next i
+   for i = 0 to 13
+      if jauge(i) = 500 then jauge(i) = 498
+   next i
+   choix = 0: to_attak = 1: attaker = 1
+   pos_combat(nE,nJ)
+   for i = 11 to 10+nE: loupe(i) = 0: jauge(i)= surprise*500 + (fx(surprise)*10*2^(rnd(4))): next i
+
+   init_maximize(): affich_combat(ar_p,nE,nJ,-1): do_maximize()
+   for i = 0 to 3: display_maximize():  next i
+
+repeat
+   set text to normal: ink 0,0: set text size 14
+rem init_maximize(): set current bitmap 0
+``personne n'attaque, car les jauges montent
+   while jauge_pleine(nJ)<0 or surprise=1
+      init_maximize()
+      rem cls 0
+         affich_combat(ar_p,nE,nJ,-1)
+      for i = 11 to 10+nE
+         if mort(i) = 0 then jauge(i) = jauge(i) + Recup(i): if jauge(i) > 500 then jauge(i) = 500
+      next i
+      for i = 0 to nJ-1
+         if mort(withMe(i)) = 0 and surprise=0 then jauge(withMe(i)) = jauge(withMe(i)) + Recup(withMe(i)): if jauge(withMe(i)) > 500 then jauge(withMe(i)) = 500
+      next i
+
+      affiche_jauge(nJ,1)
+         if surprise
+            for i = 1 to 4
+                     init_maximize()
+               affich_combat(ar_p,nE,nJ,-1)
+               ink rgb(255,255,0),0: center text 160,110-i*2,msgCombat$(5)
+                      do_maximize(): display_maximize(): surprise=0
+            next i
+         endif
+      do_maximize()
+      rem sync
+   endwhile
+
+   get image 1994, 150,180,319,239
+   attaker = jauge_pleine(nJ)
+   if attaker < 11 then play sound 3
+
+   for i = 1 to 2
+      init_maximize(): affich_combat(ar_p,nE,nJ,attaker): affiche_jauge(nJ,0): do_maximize()
+      init_maximize(): affich_combat(ar_p,nE,nJ,-1): affiche_jauge(nJ,0): do_maximize()
+   next i
+
+   ``ink 0,0: set text to bold: set text size 16
+
+``####################  à nous d'attaquer #########################
+
+if attaker < 11
+choix_action:
+`choix de l'action
+   repeat
+         init_maximize()
+      ch = choix
+      set text to bold: set text size 16
+      affich_combat(ar_p,nE,nJ,-1)
+      for i = 0 to 1+fx(officiel):text 23,195+i*12,msgCombat$(i): next i
+      if keystate(key(3)) then choix = mod(choix-1,2+fx(officiel))
+      if keystate(key(5)) then choix = mod(choix+1,2+fx(officiel))
+
+      paste image 1992, 5, 198 + 12 * choix,0
+      affiche_jauge(nJ,0)
+      k= keystate(key(1))
+      do_maximize()
+      if ch<>choix then play sound 4 : display_maximize()
+   until k: display_maximize()
+
+   `fuire...
+      if choix = 2 then set text size 17: set text to italic: ink 0,0: jauge(withMe(attaker)) = 0: exitfunction
+
+   `choix de la cible (mode attaque)
+      if choix = 0
+         play sound 3
+         if mort(to_attak+10) = 1 then to_attak = 1
+         while mort(to_attak+10) = 1: inc to_attak: endwhile
+
+         k = 0: ok = 0
+             repeat
+                  init_maximize()
+            affich_combat(ar_p,nE,nJ,-1): toA = to_attak
+            if keystate(key(3))
+               repeat
+                  dec to_attak: if to_attak < 1 then to_attak = nE
+               until mort(to_attak+10) = 0
+            endif
+            if keystate(key(5))
+               repeat
+                  inc to_attak: if to_attak > nE then to_attak = 1
+               until mort(to_attak+10) = 0
+            endif
+
+            paste image 1992,bex(to_attak)-16,bey(to_attak)-6,0
+            if keystate(key(1)) then k = 1
+            if keystate(key(0)) or keystate(key(2)) then k = 2
+            if scancode() = 0 then ok = 1
+            affiche_jauge(nJ,0)
+            do_maximize()
+            if toA <> to_attak then play sound 4: display_maximize()
+         until k>0 and ok: if k = 2 then goto choix_action
+
+         play sound 3: jauge(withMe(attaker)) = 0
+
+
+         `attaque réussie ?
+         att = getIssuAttaquer(attaker, to_attak+10, officiel,1)
+         `calcul des dommages
+         EnDeg = (Force(attaker)*1.7)+(Degat(attaker)*1.3)+rnd((Degat(attaker))/5) -(Defen(to_attak+10)/2)
+
+            ink rgb(255,255,255),0
+            if att = 0
+               play sound 5
+               init_maximize(): affich_combat(ar_p,nE,nJ,-1): paste image 5000,(bpx(attaker+1)+bex(to_attak))/3-25,(bpy(attaker+1)+bey(to_attak))/2-27,0: affiche_jauge(nJ,0): do_maximize()
+               init_maximize(): affich_combat(ar_p,nE,nJ,-1):   paste image 5001,bex(to_attak)-25,bey(to_attak)-27,0: affiche_jauge(nJ,0): do_maximize()
+               if EnDeg >= Energ(to_attak+10) then ink rgb(255,255,0),0 else ink rgb(255,255,255),0
+               for i = 1 to 2
+                  init_maximize(): affich_combat(ar_p,nE,nJ,10+to_attak): center text bex(to_attak), bey(to_attak)-(i*2+5), str$(EnDeg): affiche_jauge(nJ,0): do_maximize()
+                  init_maximize(): affich_combat(ar_p,nE,nJ,-1): center text bex(to_attak), bey(to_attak)-(i*2+5),str$(EnDeg): affiche_jauge(nJ,0): do_maximize()
+               next i
+               Energ(to_attak+10) = Energ(to_attak+10) - EnDeg
+               if Energ(to_attak+10) <= 0
+                  play sound 6
+                  Energ(to_attak+10)=0: Mort(to_attak+10)=1: kill(withMe(attaker)) = kill(attaker) + 1
+                  for i = 1 to 3
+                               init_maximize()
+                     affich_combat(ar_p,nE,nJ,-1): affiche_jauge(nJ,0)
+                     paste image 5003+i,bex(to_attak)-30, bey(to_attak)-24,0
+                               do_maximize()
+                  next i
+               endif
+               loupe(attaker)=0
+            else
+               msg$ = msgCombat$(2+att)
+               for i = 1 to 2
+                           init_maximize()
+                  affich_combat(ar_p,nE,nJ,-1):affiche_jauge(nJ,0)
+                  center text bex(to_attak), bey(to_attak)-(i*2+5), msg$
+                           do_maximize()
+               next i
+               loupe(attaker) = loupe(attaker)+1
+            endif
+      endif
+
+      `choix de la potion
+      if choix = 1
+choix_potion:
+         `vérifie qu'on a bien des potions
+         s=0:for i = 53 to 56: s = s+nbrObj(i): next i: if s=0 then play sound 1: goto choix_action
+         play sound 3
+         c = 0: ok = 0: k = 0
+             repeat
+                  init_maximize()
+                  c2 = c
+            affich_combat(ar_p,nE,nJ,-1): affiche_jauge(nJ,0)
+            t = 0: for i = 0 to 4
+               if nbrObj(i+53) then paste image 5073+i,50+25*t,195,0: inc t
+            next i
+            if keystate(key(4)) then c = mod(c+1,t)
+            if keystate(key(6)) then c = mod(c-1,t)
+            if scancode()=0 then ok = 1
+            paste image 1992,35+25*c,197,0
+            if keystate(key(1)) then k = 1
+            if keystate(key(0)) or keystate(key(2)) then k = 2
+            do_maximize()
+                  if c2 <> c then play sound 4: display_maximize()
+         until k>0 and ok
+             display_maximize()
+
+         `choix de la personne qui va être soignée
+         if k = 1
+            pot = 0: cp = 0
+            for i = 0 to 4
+               if nbrObj(i+53) then inc cp: if cp = c+1 then pot = 53+i
+            next i
+            play sound 3: ok = 0: k = 0
+            ch = attaker
+            repeat
+                     init_maximize()
+                     ch2 = ch
+               affich_combat(ar_p,nE,nJ,-1)
+               affiche_jauge(nJ,0)
+               if keystate(key(3))
+                  repeat
+                     dec ch: if ch < 0 then ch = nJ-1
+                  until mort(withMe(ch)) = 0
+               endif
+               if keystate(key(5))
+                  repeat
+                     inc ch: if ch >= nJ then ch = 0
+                  until mort(withMe(ch)) = 0
+               endif
+               paste image 1992,bpx(ch+1)-16,bpy(ch+1)-6,0
+               if keystate(key(1)) then k = 1
+               if keystate(key(0)) or keystate(key(2)) then k = 2
+               if scancode() = 0 then ok = 1
+               if k = 1 and Energ(withMe(ch))= EnMax(withMe(ch)) and ok then play sound 1
+                      do_maximize(): display_maximize(): k = 0
+               if ch <> ch2 then play sound 4: display_maximize()
+            until k>0 and ok
+
+            `on utilise la potion sur qq1
+            if k = 1
+               play sound 8
+               nbrObj(pot) = nbrObj(pot)-1
+               exVie = Energ(withMe(ch)): vie = Energ(withMe(ch)) + objSta(pot)*50: if vie > EnMax(getPerso(ch)) then vie = EnMax(getPerso(ch))
+               for i = exvie to vie step objSta(pot)*6
+                           init_maximize()
+                  Energ(withMe(ch)) = i: if Energ(withMe(ch)) > vie then Energ(withMe(ch)) = vie
+                  affich_combat(ar_p,nE,nJ,-1): affiche_jauge(nJ,1)
+                           do_maximize()
+               next i
+                      display_maximize()
+
+               init_maximize(): jauge(withMe(attaker)) = 0: affich_combat(ar_p,nE,nJ,-1): affiche_jauge(nJ,1): do_maximize()
+            else
+               play sound 2: goto choix_potion
+            endif
+         else
+            play sound 2: goto choix_action
+         endif
+      endif
+else
+``##############  C'est l'enemi qui nous attaque  ##################
+   jauge(attaker)=0
+   repeat: be_attak = rnd(nJ-1): until mort(be_attak)=0
+         init_maximize()
+      affich_combat(ar_p,nE,nJ,-1)
+      paste image 5002,((bpx(be_attak+1)+bex(attaker-10))*2)/3-25,(bpy(be_attak+1)+bey(attaker-10))/2-27,0: affiche_jauge(nJ,0)
+         do_maximize()
+
+         init_maximize()
+      affich_combat(ar_p,nE,nJ,-1)
+      paste image 5003,bpx(be_attak+1)-25,bpy(be_attak+1)-27,0: affiche_jauge(nJ,0)
+         do_maximize()
+
+
+         `attaque réussie ?
+         att = getIssuAttaquer(attaker, be_attak, officiel,0)
+         `calcul des dommages
+         EnDeg = (Force(attaker)*1.7)+(Degat(attaker)*1.3)+rnd((Degat(attaker))/5) - (Defen(be_attak)/2)
+         ink rgb(255,255,255),0
+         if att = 0
+            play sound 5
+            `affichage des pts que vous allez perdre
+            if EnDeg >= Energ(withMe(be_attak)) then ink rgb(255,255,0),0 else ink rgb(255,255,255),0
+            for i = 1 to 2
+               init_maximize(): affich_combat(ar_p,nE,nJ,be_attak): center text bpx(be_attak+1), bpy(be_attak+1)-(i*2+5), str$(EnDeg): affiche_jauge(nJ,0): do_maximize()
+               init_maximize(): affich_combat(ar_p,nE,nJ,-1): center text bpx(be_attak+1), bpy(be_attak+1)-(i*2+5),str$(EnDeg): affiche_jauge(nJ,0): do_maximize()
+            next i
+            `vos point d'énergie baissent
+            exVie = Energ(withMe(be_attak)): vie = Energ(withMe(be_attak)) - EnDeg: if vie < 0 then vie = 0
+            for i = exvie to vie step -8
+               init_maximize()
+               Energ(withMe(be_attak)) = i: if Energ(withMe(be_attak)) < vie then Energ(withMe(be_attak)) = vie
+               affich_combat(ar_p,nE,nJ,-1): affiche_jauge(nJ,1)
+               do_maximize()
+            next i
+               Energ(withMe(be_attak)) = vie
+               `vous êtes mort => explosion
+               if Energ(withMe(be_attak)) = 0
+               Energ(withMe(be_attak))=0: Mort(withMe(be_attak))=1: play sound 6
+               for i = 1 to 3
+                  init_maximize()
+                  affich_combat(ar_p,nE,nJ,-1): affiche_jauge(nJ,1)
+                  paste image 5003+i,bpx(be_attak+1)-30, bpy(be_attak+1)-24,0
+                  do_maximize()
+               next i
+            endif
+            loupe(attaker)=0
+         else
+            msg$ = msgCombat$(2+att)
+            for i = 1 to 2
+               init_maximize()
+               affich_combat(ar_p,nE,nJ,-1): affiche_jauge(nJ,0)
+               center text bpx(be_attak+1), bpy(be_attak+1)-(i*2+5), msg$
+               do_maximize()
+            next i
+            loupe(attaker) = loupe(attaker) +1
+         endif
+endif
+
+`` _ fin de la boucle
+until tous_mort(nE,nJ)>0
+
+   stop music infoMusic(2)
+
+   if tous_mort(nE,nJ)=2
+      end
+   else
+      PlayMusicCombat(3)
+         init_maximize() : affich_combat(ar_p,nE,nJ,-1): do_maximize()
+      for i = 0 to 3: display_maximize() : next i
+      attrib_pts(nE, officiel)
+   endif
+
+set text size 17: set text to italic
+ink 0,0
+
+endfunction
+
+
+
+
+
+
+
+
+
+
+
+
+
+``###############################################################
+``#                        FONCTION MENU                        #
+``###############################################################
+``##                                                           ##
+``#   Menu pour voir - les statistiques des personnages         #
+``#                  - les statistiques des objets              #
+``#                  - nos objets                               #
+``#                  - utiliser des potions                     #
+``#                  - équiper nos personnages                  #
+``##                                                           ##
+``###############################################################
+
+
+
+`` _ _ _ _ Fonction principale _ _ _ _
+
+function menu(nbrPerso, decalX, decalY,im_4_sav,argent, numMap)
+   set text size 17: set text to normal
+   show = 100: by = 0: chx = 0: play sound 3
+
+   if nivo(x(0)/4,y(0)/4,2)>=im_4_sav and nivo(x(0)/4,y(0)/4,2)<im_4_sav+4 then save_able=1 else save_able=0
+      aaa=nivo(x(0)/4,y(0)/4,2)
+
+Menu_debut:
+`menu
+y = show: ok = 0
+repeat
+   init_maximize()
+   ech = chx: cptr(0) = mod(cptr(0)+2,4)
+   if fx(by)
+      dec y,25: if y <= 0 then y = 0: show = 0
+   else
+      inc y,25: if y >= 100 then goto retour_au_jeu
+   endif
+   affichage(nbrPerso, decalX, decalY)
+   paste image 1995,0-y,65
+   for i = 3 to 6: ink rgb(255,255,255),0
+      if i = 5 and fx(save_able) then ink rgb(128,128,128),0
+      text 19-y,77+(i-3)*20,cmd$(i)
+   next i
+
+   if y = 0
+      if can_do
+         if keystate(key(3)) then chx=mod(chx-1,4): if chx = 2 and fx(save_able) then dec chx
+         if keystate(key(5)) then chx=mod(chx+1,4): if chx = 2 and fx(save_able) then inc chx
+      endif
+      paste image 1992,3,80+chx*20,0
+   endif
+   if scancode()=0 then ok = 1: can_do=1 else can_do=0
+   if keystate(key(1)) and ok Then k = 1: play sound 3 else k = 0
+   if (keystate(key(2)) or keystate(key(0))) and ok then by = 1: play sound 2
+   if chx <> ech then play sound 4
+    do_maximize()
+    display_maximize()
+until k and ok
+
+
+Joueur = 0
+`Choix : personnages
+ChoixPerso:
+if chx = 0
+   x = Joueur: ok = 0
+    repeat
+         init_maximize()
+         ex = x: cptr(0) = mod(cptr(0)+2,4)
+      ``affichage(nbrPerso, decalX, decalY)
+      paste image 1996,0,0
+      text 20,18,cmd$(7)+" :"
+      for i = 0 to fightPlay() -1
+         paste image 1501+withMe(i), 80+i*90,15
+      next i
+      text 35,70,cmd$(47)+" : "+str$(argent)
+      if keystate(key(4)) then inc x: if x >= fightPlay() then dec x
+      if keystate(key(6)) then dec x: if x < 0 then inc x
+      paste image 1992,65+x*90,20,0
+      if scancode()=0 then ok = 1
+      if keystate(key(1)) then k = 1: play sound 3 else k = 0
+      if (keystate(key(2)) or keystate(key(0))) and ok then play sound 2: goto Menu_debut
+      do_maximize()
+         if x <> ex then play sound 4: display_maximize()
+   until k and ok: Joueur = x: x = 0
+
+statOrEquip:
+      `stats ou équipement
+      ok=0
+         repeat
+            init_maximize()
+            ex = x
+         paste image 1996,0,0
+         ControleTimeOfMusic()
+         for i = 0 to 1: text 60+i*120,18,cmd$(8+i): next i
+         if keystate(key(4)) then x=1
+         if keystate(key(6)) then x=0
+         paste image 1992,45+x*120,20,0
+         if scancode()=0 then ok = 1
+         if keystate(key(1)) and ok then k = 1:play sound 3 else k = 0
+         if (keystate(key(2)) or keystate(key(0))) and ok then play sound 2:goto ChoixPerso
+         do_maximize(): if ex <> x then play sound 4: display_maximize()
+      until k and ok
+
+      if x=0
+         `affichage des stats du perso
+         ok=0
+             repeat
+                  init_maximize()
+            ControleTimeOfMusic()
+            paste image 1996,0,0
+            paste image 1501+withMe(Joueur),240,15
+            text  25, 18,cmd$(10)   + " :  " + nom$(withMe(Joueur))
+            text  25, 70,cmd$(11)   + " :  "
+            text  30, 88,cmd$(12)   + " :  " : text 140-text width(str$(Level(withMe(Joueur)))), 88,str$(Level(withMe(Joueur)))
+            text  30,106,cmd$(40)   + " :  " + str$(ExPts(withMe(Joueur)))
+            if Level(withMe(Joueur))<99 then text 170,106,cmd$(41)+" :  " + str$(NextL(withMe(Joueur))-ExPts(withMe(Joueur)))
+            text  30,142,cmd$(38)    + " :   " +  str$(Energ(withMe(Joueur)))+"/"+str$(EnMax(withMe(Joueur)))
+            text  30,160,cmd$(13)   + " :" : text 140-text width(str$(Force(withMe(Joueur)))), 160, str$(Force(withMe(Joueur)))
+            text 170,160,cmd$(14)   + " :" : text 300-text width(str$(Rapid(withMe(Joueur)))),160, str$(Rapid(withMe(Joueur)))
+            text  30,178,cmd$(15)   + " :" : text 140-text width(str$(Agili(withMe(Joueur)))),178, str$(Agili(withMe(Joueur)))
+            text 170,178,cmd$(16)   + " :" : text 300-text width(str$(Preci(withMe(Joueur)))),178, str$(Preci(withMe(Joueur)))
+            do_maximize()
+                  if scancode()=0 then ok = 1
+            if (keystate(key(2)) or keystate(key(0))) and ok then play sound 2:k = 1 else k = 0
+         until k and ok
+               goto statOrEquip
+
+      else
+         `affichage de l'équipemt du perso
+         ok=0: yy = 0
+             repeat
+                  init_maximize()
+                  ey = yy
+            aff_equip_perso(Joueur)
+            if keystate(key(5)) then yy=mod(yy+1,4)
+            if keystate(key(3)) then yy=mod(yy-1,4)
+            paste image 1992, 20, 86+36*yy,0
+
+            if scancode()=0 then ok = 1
+            if (keystate(key(2)) or keystate(key(0))) and ok then play sound 2:k = 1 else k = 0
+            if keystate(key(1)) and ok then play sound 3: changeObj(Joueur,yy)
+            do_maximize()
+                  if ey <> yy then play sound 4: display_maximize()
+         until k and ok
+               goto statOrEquip
+      endif
+endif
+
+
+`Choix : Stats des objets
+
+if chx = 1
+   x = 0: y = 0
+StatsObjets:
+   rempli_dispo_obj()
+
+   ok=0: disp = 1:
+   repeat
+      init_maximize()
+      ex = x: ey = y
+      ControleTimeOfMusic()
+      if keystate(key(4)) then x=mod(x+1,5):y=0: disp = 1
+      if keystate(key(6)) then x=mod(x-1,5):y=0: disp = 1
+      if dispObj((x<4)*(x*16+y)+(x=4)*(52+y)+1)=0
+         a = look4obj(y,x): if a <> -1 then y = a: disp = 1 else disp = 0
+      endif
+      if keystate(key(3)) and disp
+         repeat
+            y=mod(y-1,4+(x<3)*12)
+            e = (x<4)*(x*16+y)+(x=4)*(52+y)+1
+         until dispObj(e)
+      endif
+      if keystate(key(5)) and disp
+         repeat
+            y=mod(y+1,4+(x<3)*12)
+            e = (x<4)*(x*16+y)+(x=4)*(52+y)+1
+         until dispObj(e)
+      endif
+      aff_stats_obj(x,y,disp)
+      if x = 4 and disp then paste image 1992,42,182,0
+      do_maximize()
+      if scancode()=0 then ok = 1
+      if (keystate(key(2)) or keystate(key(0))) and ok then play sound 2:k = 1 else k = 0
+      if ok and keystate(key(1)) and x=4 and disp=1 then k = 2: play sound 3
+      if ex <> x or ey <> y then play sound 4: display_maximize()
+   until k>0 and ok
+
+   `utilisation d'une potion
+   if k=2
+      ok=0: fp = fightPlay(): disp = 1: z=0
+         repeat
+            if ez <> z then play sound 4: display_maximize()
+         ControleTimeOfMusic()
+         init_maximize()
+             ez = z
+         if keystate(key(4)) then z=mod(z+1,fp)
+         if keystate(key(6)) then z=mod(z-1,fp)
+         aff_stats_obj(x,y,1)
+         for i = 0 to fightPlay()-1
+            paste image 1501+withMe(i),90 + text width(cmd$(37))+ i*30,175
+         next i
+         paste image 1992,75 + text width(cmd$(37))+ z*30,182,0
+         do_maximize()
+             if scancode()=0 then ok = 1
+         if (keystate(key(2)) or keystate(key(0))) and ok then play sound 2:k = 1 else k = 0
+         if ok and keystate(key(1)) and x=4
+            for i = 0 to 10
+               if withMe(z)=i and Energ(i)<EnMax(i) then k =2: prs = i
+            next i
+            if k <> 2 then play sound 1
+         endif
+      until k>0 and ok
+         if k = 2 then play sound 8: Energ(prs)=Energ(prs)+(50*objSta(53+y)): nbrObj(53+y) = nbrObj(53+y)-1: rempli_dispo_obj(): if Energ(prs)> EnMax(prs) then Energ(prs)=EnMax(prs)
+         goto StatsObjets
+   else
+      goto Menu_debut
+   endif
+endif
+
+`` Quitter le jeu ??
+if chx = 3
+   cptr(0)= 2: affichage(nbrPerso, decalX, decalY)
+   ok = 0: k = 0: cht = 1
+   repeat: eht = cht
+      ControleTimeOfMusic()
+      `` affichage du menu précédent
+      paste image 1995,0-y,65
+         for i = 3 to 6: ink rgb(255,255,255),0
+            if i = 5 and fx(save_able) then ink rgb(128,128,128),0
+            text 19-y,77+(i-3)*20,cmd$(i)
+         next i
+      `` affichage de la boite de dialogue
+      paste image 1999,61,87
+      center text 160,100,cmd$(43)
+      center text 100,120,cmd$(44)
+      center text 220,120,cmd$(45)
+
+      if keystate(key(4)) then cht = 1
+      if keystate(key(6)) then cht = 0
+
+      paste image 1992,80+cht*120,122,0
+      if scancode()=0 then ok = 1
+      if (keystate(key(2)) or keystate(key(0))) and ok then k = 2
+      if keystate(key(1)) and ok then k = 1 + cht
+
+      do_maximize()
+      if cht <> eht then play sound 4: display_maximize()
+   until ok and k>0
+
+      if k = 1
+         play sound 3: cls 0: end
+      else
+         play sound 2
+      endif
+endif
+
+`` Sauvegarde de la partie
+if chx = 2
+   numSlot = ChoiceGameToSave()
+   if numSlot
+      for i=1 to 3
+            if WithMe(i)<>-1 then Energ(WithMe(i)) = EnMax(WithMe(i))
+      next i
+      saveInSlot(numSlot, numMap, decalX, decalY, argent)
+   endif
+
+endif
+
+
+retour_au_jeu:
+   set text size 17:set text to italic
+endfunction
+
+
+
+
+
+
+
+``###############################################################
+``#               FCT COMPLEMENTAIRES POUR LE MENU              #
+``###############################################################
+``##                                                           ##
+``#   Les fonctions sont les suivantes :                        #
+``#                  - aff_equip_perso(Joueur)                  #
+``#                  - rempli_dispo_obj()                       #
+``#                  - changeObj(Joueur,yy)                     #
+``#                  - aff_stats_obj(x,y,d)                     #
+``#                  - look4obj(y,x)                            #
+``#                  - ChoiceGameToSave()                       #
+``#                  - SaveInSlot(slot, Map, DX, DY, Argent)    #
+``#                  - WriteMot(file, mot$)                     #
+``#                  - loadFromInSlot(slot)                     #
+``##                                                           ##
+``###############################################################
+
+
+
+
+
+
+
+`` affiche les équipement du personnage
+function aff_equip_perso(Joueur)
+   ControleTimeOfMusic()
+   paste image 1996,0,0
+   paste image 1501+withMe(Joueur),240,15
+   text  25,18,cmd$(10)+ " : "+nom$(withMe(Joueur))
+   for i = 0 to 3
+      text 25,70+36*i,cmd$(17+i)+ " :"
+      text 60,86+36*i,nomObjet$(equip(i,withMe(Joueur)))
+      if equip(i,withMe(Joueur)) then paste image 5020+equip(i,withMe(Joueur)),35,85+36*i,0
+   next i
+endfunction
+
+
+`` test les objets dispo, utilisés ...
+function rempli_dispo_obj()
+   for i = 1 to 52
+      a = 0: b = 0
+      for j = 0 to 10
+         ok = 1
+         for k = 0 to 2
+            if withMe(k)=j then ok = 0
+         next k
+         if equip(i/16,j)=i
+            if ok then inc a else inc b
+         endif
+      next j
+
+      if a+b = nbrObj(i)
+         if b then dispObj(i)=3 else dispObj(i)=2
+      endif
+      if a+b < nbrObj(i) then dispObj(i)=1
+      if nbrObj(i)=0 then dispObj(i)=0
+   next i
+   for i = 53 to 56
+      if nbrObj(i) then dispObj(i)=1 else dispObj(i)=0
+   next i
+endfunction
+
+
+`` page pour le changement des équipements
+function changeObj(Joueur,yy)
+   if yy = 3 then md = 1: img = 1998:yt = 146 else md = 4: img = 1997: yt = 60
+      rempli_dispo_obj(): dispObj(equip(yy,withMe(Joueur)))=1
+      x = 0: y = 0: tp = mod(equip(yy,withMe(Joueur))-1,16): y = tp/4: x = tp-(y*4)
+      if equip(yy,withMe(Joueur))=0 then x=0:y=0
+   ok=0: k = 0: repeat
+      ControleTimeOfMusic()
+      if ey <> y or ex <> x then play sound 4: display_maximize()
+      init_maximize()
+      ex = x: ey = y
+      aff_equip_perso(Joueur)
+      paste image img, 130,yt,0
+         for j = 0 to md-1
+            for i = 0 to 3
+               if dispObj(1+i+(j*4)+yy*16) then paste image 5021+yy*16+4*j+i,142+i*28,yt+13+j*28,0
+            next i
+         next j
+      if fx(dispObj(1+x+(y*4)+yy*16) and 1) then ink rgb(128,128,128),0
+      if dispObj(1+x+(y*4)+yy*16) then center text 195,182,nomObjet$(1+x+(y*4)+yy*16)
+      center text 195,200,cmd$(22+dispObj(1+x+(y*4)+yy*16))
+      ink rgb(255,255,255),0
+
+      if keystate(key(3)) then y = mod(y-1,md)
+      if keystate(key(4)) then x = mod(x+1,4)
+      if keystate(key(5)) then y = mod(y+1,md)
+      if keystate(key(6)) then x = mod(x-1,4)
+      paste image 1992, 131+x*28, yt+17+28*y,0
+
+      if scancode()=0 then ok = 1
+      if (keystate(key(2)) or keystate(key(0))) and ok then play sound 2:k = 2
+      if keystate(key(1)) and ok
+         if vr(dispObj(1+x+(y*4)+yy*16) and 1) then k = 1: play sound 3 else play sound 1
+      endif
+      do_maximize()
+   until (k>0) and ok
+
+      if k=1
+         equip(yy,withMe(Joueur))=1+x+(y*4)+yy*16
+         if dispObj(1+x+(y*4)+yy*16)=3
+            found =-1: n = 10
+            while found=-1
+               if n = withMe(Joueur) then dec n
+               for i = 0 to 2
+                  if withMe(i)=n and equip(yy,n)=1+x+(y*4)+yy*16 then found = n
+               next i
+            dec n: endwhile
+            equip(yy,found)=0
+         endif
+      endif
+endfunction
+
+
+`` page pour afficher les stats des objets
+function aff_stats_obj(x,y,d)
+   ControleTimeOfMusic()
+   paste image 1996,0,0
+   p = text width(cmd$(26+x))/2
+   center text  160,18,cmd$(26+x)
+   for i = 0 to 4
+      box 160+i-(p+10), 26-i,160+i-(p+10), 26+i
+      box 160+i+(p+5),26+i-4,160+i+(p+5),26+4-i
+   next i
+   if d
+      for i = 0 to 4
+         box 110-i,68+i,110+i,68+i
+         box 110+i-4,97+i,110+4-i,97+i
+      next i
+      if x = 4 then xx = 3:yy= y+4 else xx = x: yy = y
+      text 140,74,nomObjet$(xx*16+yy+1)
+      paste image 5021+xx*16+yy,99,73,0
+      text 35, 110,cmd$(8)+" :"
+      select x
+         case 0: text 45,128,cmd$(32)+" : "+str$(objSta(xx*16+yy+1)): text 45,146,cmd$(34)+" : "+str$(objPoi(xx*16+yy+1)): text 45,164,cmd$(36)+" : "+str$(nbrObj(xx*16+yy+1)):endcase
+         case 1: text 45,128,cmd$(33)+" : "+str$(objSta(xx*16+yy+1)): text 45,146,cmd$(34)+" : "+str$(objPoi(xx*16+yy+1)): text 45,164,cmd$(36)+" : "+str$(nbrObj(xx*16+yy+1)):endcase
+         case 2: text 45,128,cmd$(33)+" : "+str$(objSta(xx*16+yy+1)): text 45,146,cmd$(34)+" : "+str$(objPoi(xx*16+yy+1)): text 45,164,cmd$(36)+" : "+str$(nbrObj(xx*16+yy+1)):endcase
+         case 3: text 45,128,cmd$(33)+" : "+str$(objSta(xx*16+yy+1)): text 45,146,cmd$(34)+" : "+str$(objPoi(xx*16+yy+1)): text 45,164,cmd$(36)+" : "+str$(nbrObj(xx*16+yy+1)):endcase
+         case 4: text 45,128,cmd$(35)+" : "+str$(50* objSta(xx*16+yy+1)): text 45,146,cmd$(36)+" : "+str$(nbrObj(xx*16+yy+1)):text 60,180,cmd$(37): endcase
+      endselect
+   else
+      center text 160,74,cmd$(31)
+   endif
+endfunction
+
+
+`` recherche le premier objet d'une cathégorie
+function look4obj(y,x)
+   cpt = 0:   repeat
+      y=mod(y+1,4+(x<3)*12): inc cpt
+      e = (x<4)*(x*16+y)+(x=4)*(52+y)+1
+   until dispObj(e) or cpt>20
+   if cpt > 20 then disp = -1 else disp = y
+endfunction disp
+
+
+
+
+`` choix de la partie à sauvegarder
+function ChoiceGameToSave()
+   y = 0
+   enableOk = 0
+   choice = -1
+   ink rgb(255,255,255),0
+   Save$(1,0) = "1"
+   for i = 1 to 3
+      ControleSavedFile(i)
+   next i
+
+   repeat
+      init_maximize()
+      afficheSaveLoad(55, y)
+
+      if scancode()=0 then enableOk=1
+
+      if enableOk and k=0
+         if keystate(key(3)) then k = 1: y = mod(y-1, 4): play sound 4
+         if keystate(key(5)) then k = 2: y = mod(y+1, 4): play sound 4
+         if keystate(key(0)) or keystate(key(2)) then k = 8
+         if keystate(key(1)) then k = 4
+      else
+         if scancode() = 0
+            if k = 4
+               choice = mod(y+1,4)
+               if choice then play sound 8 else play sound 2
+            endif
+            if k = 8 then choice = 0: play sound 2
+            k = 0
+         endif
+      endif
+      do_maximize()
+   until choice <> -1
+
+   exitfunction choice
+endfunction
+
+
+
+`` sauvegarde de la partie dans un fichier
+function SaveInSlot(slot, numMap, DecalX, DecalY, Argent)
+   file$ =    "SAVE\save"+Str2$(slot)+".dat"
+   if file exist(file$) then delete file file$
+
+   open to write 5, file$
+      write byte 5, asc("L")
+      write byte 5, asc("i")
+      write byte 5, asc("o")
+
+      WriteMot(5, Get Date$())
+      WriteMot(5, Get Time$())
+
+      For i = 0 To 2
+         Write Byte 5, WithMe(i)
+      Next i
+
+      For i = 0 to 10
+         WriteMot(5, nom$(i))
+         Write Word 5, ExPts(i)
+         Write Byte 5, Level(i)
+         Write Word 5, Energ(i)
+          Write Byte 5, mort(i)
+         Write Byte 5, loupe(i)
+         For j = 0 to 3
+            Write Byte 5, equip(j,i)
+         Next j
+      Next i
+
+      Write Byte 5, x(0)/4
+      Write Byte 5, y(0)/4
+      Write Byte 5, di(0)
+      Write Word 5, im1(0)
+
+      For i = 1 to 60
+         Write Byte 5, nbrObj(i)
+      Next i
+
+      For i = 1 to 2000
+         Write Byte 5, event(i)
+      Next i
+
+      Write Word 5, numMap
+      Write Byte 5, DecalX/4
+      Write Byte 5, DecalY/4
+      Write Word 5, Argent
+   Close File 5
+EndFunction
+
+
+
+`` écrit un mot dans un fichier de sauvegarde
+Function WriteMot(numFile, mot$)
+   Write Byte numFile, Len(mot$)
+   For i = 1 To Len(mot$)
+      Write Byte numFile, asc(Mid$(mot$,i))
+   Next i
+EndFunction
+
+
+
+
+`` chargement de la partie depuis un fichier
+function LoadFromSlot(slot)
+   file$ = "SAVE\save"+Str2$(slot)+".dat"
+   Open to Read 5, file$
+      For i = 1 to 3: Read Byte 5, a: Next i
+      ReadMot$(5)
+      ReadMot$(5)
+
+      For i = 0 To 2
+         Read Byte 5, WithMe(i): If WithMe(i)=255 Then WithMe(i)=-1
+      Next i
+
+      For i = 0 to 10
+         nom$(i) = ReadMot$(5)
+         Read Word 5, ExPts(i)
+         Read Byte 5, Level(i)
+            loadStathero(i)
+         Read Word 5, Energ(i)
+          Read Byte 5, mort(i)
+         Read Byte 5, loupe(i)
+         For j = 0 to 3
+            Read Byte 5, equip(j,i)
+         Next j
+      Next i
+
+      Read Byte 5, x: x(0)= x*4
+      Read Byte 5, y: y(0)= y*4
+      Read Byte 5, di(0)
+      Read Word 5, im1(0)
+
+      For i = 1 to 60
+         Read Byte 5, nbrObj(i)
+      Next i
+
+      For i = 1 to 2000
+         Read Byte 5, event(i)
+      Next i
+
+EndFunction 5

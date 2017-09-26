@@ -1,0 +1,71 @@
+``    __      __      ___    ______     _____    __
+``   /\ \    /\_\    /__ \  /\  __ \   /\  __\  /\ \
+``   \ \ \   \/_/_  /\\/\ \ \ \ \/\ \  \ \  _\  \ \ \
+``    \ \ \___ /\ \ \ \\_\ \ \ \ \ \ \  \ \ \___ \ \ \___
+``     \ \____\\ \_\ \ \___/  \ \_\ \_\  \ \____\ \ \____\
+``      \/____/ \/_/  \/__/    \/_/\/_/   \/____/  \/____/
+
+
+
+; ###############################################
+; #          Map Maker - by Lionel              #
+; ###############################################
+
+	MapMaker est un éditeur de maps (niveaux).
+Il permet de placer des tiles sur deux couches.
+Chacune d'entre elles a la posibilité d'être animée,
+ainsi les niveaux seront beaucoup plus conviviaux.
+
+
+	Voici les touches ou combinaisons pour pouvoir
+tirer au maximum partie des capacités de MapMaker :
+
+* click gauche :
+	. Les OptionBouton : pour sélectionner la couche à appliquer
+	. Les ScroolBar : pour faire défiler la zone de dessin
+	. Les flèches : pour faire défiler le tile à appliquer
+	. Zone de dessin : dessiner un tile
+
+* Click droit :
+	. Le menu gris gauche : choix rapide du tile
+	. Zone de dessin : effacer un tile
+
+* Shift + Click gauche maintenu :
+	. Dessiner une zone rectangulaire de même tiles
+
+* Ctrl + O :
+	. Charger une map (indiquer un numéro)
+
+* Ctrl + S :
+	. Sauver une map (indiquer un numéro)
+
+* Ctrl + N :
+	. Nouvelle map
+
+* Flèches droite et gauche :
+	. Faire défiler les tiles
+
+
+
+; Pour modifier les paramètres de MapMaker,
+; ouvrez le fichier MapMaker.INI généré après le
+; lancement de ce dernier
+
+
+; MapMaker a été réalisé en PureBasic par l1on3l.
+
+
+
+; ###############################################
+; #        Map Completor - by Lionel            #
+; ###############################################
+
+	MapCompletor est un logiciel permettant de placer
+les différents évènements, personnages, etc...
+	IL permet aussi de définir tous les attributs de
+la map : la playList musicale, les types d'ennemis combattables,
+leurs fréquence d'apparition, etc...
+
+
+; MapCompletor a été réalisé en PureBasic par l1on3l.
+

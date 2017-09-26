@@ -1,0 +1,34 @@
+12 	: personnage (sur la map)
+1500 	: têtes personnages		(en tt 200 perso max)
+1700	: monstres + perso (combat)	(en tt 200 perso max; 1er monstre à 1711)
+
+
+1950	: décor battles
+
+1990	: dialogue / map
+1991	: dialogue / combat
+1992	: main
+1993	: enter name
+1994	: jauge saved
+1995	: menu1 (Enregistrer / Quitter ...)
+1996	: menu2	(Objects /Perso ...)
+1997	: menu3 (choix arme, armure, casque)
+1998	: menu4 (choix bouclier)
+1999	: menu5 (Quitter y/n)
+2000 	: décors couche basse
+3512	: décors couche basse animée
+
+
+5000>003: anim combat
+5020>076: objects + armes + armures + ...
+
+6000	: couche haute
+7512	: couche haute animée
+
+
+
+
+libre :
+*******
+4000->4999
+5010->5019

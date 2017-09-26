@@ -1,0 +1,109 @@
+
+1 ) Déplacement :
+	numPerso,  Direc
+
+
+2 ) Changement de map :
+	numMap,  x(0),  y(0)
+
+
+3 ) Changement décor ch basse:
+	x,  y,  imageFixe  {sur 2 octets}
+
+
+4 ) Changement décor ch haute:
+	x,  y,  imageFixe  {sur 2 octets}
+
+
+5 ) Conditions:
+	tabEvent, numVariable, valeur, nbrDeTraitement	
+	{si tabEvent <50, alors on travaille sur le tablo Event: tabEvent*256+numVariable}
+	{si tabEvent =50, alors on travaille sur la réponse au dialogue}
+
+
+6 : affichage d'1 bitmap
+	numBit {+??},x,y
+
+
+7 ) changement de valeur de Xdecal et Ydecal
+	Xdecal, Ydecal
+
+
+8 ) Dialogues :
+	puiss, numTexte, numTete
+	{numDial = puiss*256+numTexte}
+
+
+9 ) changement de la variable 'event' :
+	numEvent{2 octets}, newVal
+
+
+11 ) Lancement d'un énvènement
+	numEvent
+
+
+12 ) Quel est ton nom ?
+	numPerso, numImage
+
+
+13 ) Chargement d'un monstre
+	numMonstre, 'Level'Monstre, numCombattant {1,2,3}
+
+
+14 ) Vous obtenez un objet
+	numObjet
+
+
+15) change la direction d'un joueur
+	numJoueur, dir
+
+
+16) attend un tps en ms
+	bb1*256 + bb2
+
+
+17) Batailles
+
+
+18) Change la possibilité de bouger ou non:
+	joueur, val
+
+
+19) Augmente les PVs d'un joueur:
+	joueur, PV{2bytes}
+
+
+20) Modifie 'Argent':
+	Arg - {2 bytes} , Arg + {2 bytes}
+
+
+21) Lance un son
+	num
+
+
+22) suppr perso (le positionne en -10,-10)
+	numPerso_a_suppr
+
+
+23) change valeur des playList
+	num, Etat => inPlayList(num) = Etat
+
+
+24) lance une musique
+	numMusic   (si num = 0, lancement RAN selon playList)
+
+
+25) change la valeur de nbrPerso
+	nbrPerso
+
+
+26) modifie withMe()
+	num, Etat => withMe(num) = Etat -1
+
+
+27) change l'équipement des perso
+	les 4 bits oqp
+
+
+28) change le niveau d'un joueur
+	numPerso, numLevel
